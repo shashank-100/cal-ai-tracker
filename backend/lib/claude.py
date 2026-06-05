@@ -58,6 +58,9 @@ async def analyze_food_image(image_bytes: bytes, media_type: str = "image/jpeg")
         output_tokens=response.usage.output_tokens,
     )
 
-    raw = response.content[0].text if response.content[0].type == "text" else "{}"
+    raw = response.content[0].text if response.content[0].type == "text" else ""
     raw = raw.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-    return json.loads(raw)
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        raise ValueError(f"Claude returned non-JSON response: {raw[:200]}")

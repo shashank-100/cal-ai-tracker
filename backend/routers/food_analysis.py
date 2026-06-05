@@ -35,15 +35,17 @@ async def analyze_food(
             image_bytes,
             {"content-type": image.content_type or "image/jpeg", "upsert": "true"},
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to upload image")
 
     photo_url = admin_supabase.storage.from_("food-photos").get_public_url(file_name)
 
     try:
         analysis = await analyze_food_image(image_bytes, media_type=image.content_type or "image/jpeg")
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"AI analysis failed: {str(e)}")
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Could not identify food in the image. Please try a clearer photo.")
+    except Exception:
+        raise HTTPException(status_code=502, detail="Food analysis unavailable. Please try again.")
 
     return {
         **analysis,

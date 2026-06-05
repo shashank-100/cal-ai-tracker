@@ -181,7 +181,7 @@ export default function App() {
         birthday={data.birthday}
       />;
     case 'createAccount':
-      return <CreateAccountScreen onApple={next} onGoogle={next} onBack={back} />;
+      return <CreateAccountScreen onApple={next} onGoogle={next} onSkip={() => setScreen('home')} onBack={back} />;
     case 'loading':
       return <LoadingScreen onboardingData={data} onComplete={next} />;
     case 'home':

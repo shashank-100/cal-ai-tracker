@@ -112,13 +112,18 @@ export default function LoadingScreen({ onboardingData, onComplete }: Props) {
     };
 
     api.plans.generate(token, body)
-      .catch(() => {
-        Alert.alert('Setup failed', 'Could not generate your plan. You can retry from settings.', [
-          { text: 'Continue anyway', onPress: onComplete },
-        ]);
+      .then(() => {
+        setPercent(100);
+        setTimeout(onComplete, 400);
       })
-      .then((plan) => {
-        if (plan) { setPercent(100); setTimeout(onComplete, 400); }
+      .catch(() => {
+        setPercent(100);
+        Alert.alert(
+          'Setup incomplete',
+          'Could not generate your plan. You can set it up from Settings.',
+          [{ text: 'Continue', onPress: onComplete }],
+          { cancelable: false }
+        );
       });
   }, [percent, token]);
 

@@ -11,12 +11,14 @@ async def get_current_user(
 ) -> dict:
     token = credentials.credentials
     try:
-        # Verify JWT with Supabase — creates a client scoped to this user's token
         client = create_client(settings.supabase_url, settings.supabase_anon_key)
-        client.auth.set_session(token, "")
         user_resp = client.auth.get_user(token)
-        if not user_resp.user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        if not user_resp or not user_resp.user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
         return {"id": user_resp.user.id, "email": user_resp.user.email, "token": token}
-    except Exception:
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Auth error: %s", type(e).__name__)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")

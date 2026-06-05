@@ -19,6 +19,7 @@ GoogleSignin.configure({
 interface Props {
   onApple: () => void;
   onGoogle: () => void;
+  onSkip: () => void;
   onBack: () => void;
 }
 
@@ -41,7 +42,7 @@ function AppleLogo() {
   );
 }
 
-export default function CreateAccountScreen({ onApple, onGoogle, onBack }: Props) {
+export default function CreateAccountScreen({ onApple, onGoogle, onSkip, onBack }: Props) {
   const [loading, setLoading] = useState<'apple' | 'google' | null>(null);
 
   const handleGoogle = async () => {
@@ -112,7 +113,7 @@ export default function CreateAccountScreen({ onApple, onGoogle, onBack }: Props
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.skipBtn} onPress={onGoogle} activeOpacity={0.85} disabled={loading !== null}>
+          <TouchableOpacity style={styles.skipBtn} onPress={onSkip} activeOpacity={0.85} disabled={loading !== null}>
             <Text style={styles.skipText}>Skip for now</Text>
           </TouchableOpacity>
         </View>

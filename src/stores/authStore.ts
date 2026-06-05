@@ -18,15 +18,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
 
   initialize: () => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      set({
-        session,
-        user: session?.user ?? null,
-        token: session?.access_token ?? null,
-        loading: false,
-      });
-    });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         set({

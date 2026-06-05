@@ -127,13 +127,5 @@ async def update_food_log(log_id: str, body: FoodLogUpdate, user: dict = Depends
 
 @router.delete("/{log_id}")
 async def delete_food_log(log_id: str, user: dict = Depends(get_current_user)):
-    res = (
-        admin_supabase.table("food_logs")
-        .delete()
-        .eq("id", log_id)
-        .eq("user_id", user["id"])
-        .execute()
-    )
-    if not res.data:
-        raise HTTPException(status_code=404, detail="Log entry not found")
+    admin_supabase.table("food_logs").delete().eq("id", log_id).eq("user_id", user["id"]).execute()
     return {"deleted": True}

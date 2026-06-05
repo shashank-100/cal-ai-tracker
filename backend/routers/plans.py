@@ -1,8 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from middleware.auth import get_current_user
 from lib.supabase import admin_supabase
 from lib.plan_calc import generate_plan
 from models.schemas import PlanGenerateRequest
+
+
+class PlanPatch(BaseModel):
+    is_active: bool | None = None
 
 router = APIRouter(prefix="/plans", tags=["plans"])
 
@@ -51,8 +56,11 @@ async def generate_user_plan(body: PlanGenerateRequest, user: dict = Depends(get
 
 
 @router.patch("/{plan_id}")
-async def update_plan(plan_id: str, body: dict, user: dict = Depends(get_current_user)):
-    res = admin_supabase.table("plans").update(body).eq("id", plan_id).eq("user_id", user["id"]).execute()
+async def update_plan(plan_id: str, body: PlanPatch, user: dict = Depends(get_current_user)):
+    patch = body.model_dump(exclude_none=True)
+    if not patch:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    res = admin_supabase.table("plans").update(patch).eq("id", plan_id).eq("user_id", user["id"]).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Plan not found")
     return res.data[0]
