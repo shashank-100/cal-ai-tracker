@@ -30,6 +30,6 @@ def update_streak(user_id: str, log_date: date) -> dict:
         "longest_streak": longest,
         "last_log_date": log_date.isoformat(),
         "updated_at": "now()",
-    }).execute()
+    }, on_conflict="user_id").execute()
 
     return {"current_streak": current, "longest_streak": longest}
