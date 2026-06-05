@@ -8,10 +8,10 @@ router = APIRouter(prefix="/profile", tags=["profile"])
 
 @router.get("")
 async def get_profile(user: dict = Depends(get_current_user)):
-    res = admin_supabase.table("users").select("*").eq("id", user["id"]).single().execute()
+    res = admin_supabase.table("users").select("*").eq("id", user["id"]).limit(1).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Profile not found")
-    return res.data
+    return res.data[0]
 
 
 @router.patch("")

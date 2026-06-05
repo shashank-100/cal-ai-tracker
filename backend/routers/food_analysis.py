@@ -25,15 +25,16 @@ async def analyze_food(
 
     # Upload to Supabase Storage
     file_name = f"{user['id']}/{uuid.uuid4()}.jpg"
-    upload_res = admin_supabase.storage.from_("food-photos").upload(
-        file_name,
-        image_bytes,
-        {"content-type": "image/jpeg", "upsert": "false"},
-    )
-    if upload_res.get("error"):
-        raise HTTPException(status_code=500, detail="Failed to upload image")
+    try:
+        admin_supabase.storage.from_("food-photos").upload(
+            file_name,
+            image_bytes,
+            {"content-type": image.content_type or "image/jpeg", "upsert": "true"},
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
 
-    public_url = admin_supabase.storage.from_("food-photos").get_public_url(file_name)
+    photo_url = admin_supabase.storage.from_("food-photos").get_public_url(file_name)
 
     # Analyze with Claude Vision
     try:
@@ -43,6 +44,6 @@ async def analyze_food(
 
     return {
         **analysis,
-        "photo_url": public_url,
+        "photo_url": photo_url,
         "meal_type": meal_type,
     }

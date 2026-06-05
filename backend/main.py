@@ -22,9 +22,15 @@ app = FastAPI(
     description="Backend API for Cal AI calorie tracking app",
 )
 
+ALLOWED_ORIGINS = [
+    "https://calai-production-72a1.up.railway.app",
+    "http://localhost:8081",   # Expo dev
+    "http://localhost:19006",  # Expo web
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Tighten this in production to your app's domain
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -7,8 +7,8 @@ router = APIRouter(prefix="/streaks", tags=["streaks"])
 
 @router.get("")
 async def get_streak(user: dict = Depends(get_current_user)):
-    res = admin_supabase.table("streaks").select("*").eq("user_id", user["id"]).single().execute()
-    return res.data or {"current_streak": 0, "longest_streak": 0, "last_log_date": None}
+    res = admin_supabase.table("streaks").select("*").eq("user_id", user["id"]).limit(1).execute()
+    return res.data[0] if res.data else {"current_streak": 0, "longest_streak": 0, "last_log_date": None}
 
 
 @router.get("/achievements")
