@@ -1,5 +1,10 @@
-from fastapi import FastAPI
+import logging
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from routers import (
     profile,
@@ -16,16 +21,27 @@ from routers import (
     usage,
 )
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+logger = logging.getLogger("calai")
+
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title="Cal AI API",
     version="1.0.0",
     description="Backend API for Cal AI calorie tracking app",
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 ALLOWED_ORIGINS = [
     "https://calai-production-72a1.up.railway.app",
-    "http://localhost:8081",   # Expo dev
-    "http://localhost:19006",  # Expo web
+    "http://localhost:8081",
+    "http://localhost:19006",
 ]
 
 app.add_middleware(
@@ -36,12 +52,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Health check
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled error %s %s: %s", request.method, request.url.path, exc, exc_info=True)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
-# Routers
+
 app.include_router(profile.router)
 app.include_router(plans.router)
 app.include_router(food_analysis.router)

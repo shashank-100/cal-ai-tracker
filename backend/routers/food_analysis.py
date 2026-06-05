@@ -1,17 +1,21 @@
 import uuid
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from middleware.auth import get_current_user
 from lib.claude import analyze_food_image
 from lib.supabase import admin_supabase
-from lib.config import settings
 
 router = APIRouter(prefix="/food-analysis", tags=["food-analysis"])
+limiter = Limiter(key_func=get_remote_address)
 
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
 @router.post("")
+@limiter.limit("10/minute")
 async def analyze_food(
+    request: Request,
     image: UploadFile = File(...),
     meal_type: str = Form(default="lunch"),
     user: dict = Depends(get_current_user),
@@ -36,7 +40,6 @@ async def analyze_food(
 
     photo_url = admin_supabase.storage.from_("food-photos").get_public_url(file_name)
 
-    # Analyze with Claude Vision
     try:
         analysis = await analyze_food_image(image_bytes, media_type=image.content_type or "image/jpeg")
     except Exception as e:
