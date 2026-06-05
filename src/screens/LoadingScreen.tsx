@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, StatusBar, Alert } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 import { api } from '../lib/api';
 import type { PlanGenerateRequest } from '../lib/types';
@@ -111,10 +111,15 @@ export default function LoadingScreen({ onboardingData, onComplete }: Props) {
       diet_preference: onboardingData.diet ?? 'balanced',
     };
 
-    api.plans.generate(token, body).catch(() => {}).finally(() => {
-      setPercent(100);
-      setTimeout(onComplete, 400);
-    });
+    api.plans.generate(token, body)
+      .catch(() => {
+        Alert.alert('Setup failed', 'Could not generate your plan. You can retry from settings.', [
+          { text: 'Continue anyway', onPress: onComplete },
+        ]);
+      })
+      .then((plan) => {
+        if (plan) { setPercent(100); setTimeout(onComplete, 400); }
+      });
   }, [percent, token]);
 
   return (

@@ -39,7 +39,10 @@ export default function FoodLogModal({ visible, onClose, onLogged }: Props) {
   const handleClose = () => { reset(); onClose(); };
 
   const pickAndAnalyze = async (source: 'camera' | 'library') => {
-    if (!token) return;
+    if (!token) {
+      Alert.alert('Not signed in', 'Please sign in to log food.');
+      return;
+    }
 
     const perm = source === 'camera'
       ? await ImagePicker.requestCameraPermissionsAsync()

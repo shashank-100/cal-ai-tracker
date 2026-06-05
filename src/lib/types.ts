@@ -31,6 +31,10 @@ export interface DailySummary {
     dinner: FoodLog[];
     snack: FoodLog[];
   };
+  // not returned by backend — populated from active plan
+  goal_protein_g?: number;
+  goal_carbs_g?: number;
+  goal_fat_g?: number;
 }
 
 export interface FoodLog {

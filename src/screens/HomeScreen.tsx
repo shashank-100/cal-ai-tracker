@@ -36,11 +36,17 @@ export default function HomeScreen() {
   const load = useCallback(async () => {
     if (!token) return;
     try {
-      const [s, st] = await Promise.all([
+      const [s, st, plan] = await Promise.all([
         api.foodLogs.dailySummary(token, todayISO()),
         api.streaks.get(token),
+        api.plans.getActive(token).catch(() => null),
       ]);
-      setSummary(s);
+      setSummary({
+        ...s,
+        goal_protein_g: plan?.protein_g ?? undefined,
+        goal_carbs_g: plan?.carbs_g ?? undefined,
+        goal_fat_g: plan?.fat_g ?? undefined,
+      });
       setStreak(st);
     } catch {}
   }, [token]);
@@ -58,14 +64,14 @@ export default function HomeScreen() {
   const circumference = 2 * Math.PI * 32;
   const offset = circumference * (1 - ringProgress);
 
-  const proteinLeft = summary
-    ? Math.max(0, (summary as any).goal_protein_g - summary.total_protein_g)
+  const proteinLeft = summary?.goal_protein_g != null
+    ? Math.max(0, summary.goal_protein_g - summary.total_protein_g)
     : null;
-  const carbsLeft = summary
-    ? Math.max(0, (summary as any).goal_carbs_g - summary.total_carbs_g)
+  const carbsLeft = summary?.goal_carbs_g != null
+    ? Math.max(0, summary.goal_carbs_g - summary.total_carbs_g)
     : null;
-  const fatLeft = summary
-    ? Math.max(0, (summary as any).goal_fat_g - summary.total_fat_g)
+  const fatLeft = summary?.goal_fat_g != null
+    ? Math.max(0, summary.goal_fat_g - summary.total_fat_g)
     : null;
 
   const MACROS = [

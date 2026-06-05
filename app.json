@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Cal AI Tracker",
-    "slug": "cal-ai-tracker",
+    "slug": "calai-tracker",
     "version": "1.0.0",
     "scheme": "calai",
     "orientation": "portrait",
@@ -14,7 +14,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.shashank.calaitracker"
+      "bundleIdentifier": "com.shashank.calaitracker",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.shashank.calaitracker",
@@ -28,7 +31,8 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.READ_MEDIA_IMAGES"
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -36,18 +40,21 @@
     },
     "extra": {
       "eas": {
-        "projectId": ""
+        "projectId": "46675da5-614f-4718-a02e-c94228af8d00"
       }
     },
     "plugins": [
       "expo-secure-store",
+      "@react-native-google-signin/google-signin",
       [
         "expo-image-picker",
         {
           "photosPermission": "Allow Cal AI to access your photos to log meals.",
           "cameraPermission": "Allow Cal AI to use the camera to photograph your food."
         }
-      ]
-    ]
+      ],
+      "expo-web-browser"
+    ],
+    "owner": "shashankt100s-organization"
   }
 }
