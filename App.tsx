@@ -1,20 +1,156 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import WelcomeScreen from './src/screens/WelcomeScreen';
+import GenderScreen from './src/screens/GenderScreen';
+import WorkoutsScreen from './src/screens/WorkoutsScreen';
+import ReferralScreen from './src/screens/ReferralScreen';
+import OtherAppsScreen from './src/screens/OtherAppsScreen';
+import ResultsScreen from './src/screens/ResultsScreen';
+import WeightSpeedScreen from './src/screens/WeightSpeedScreen';
+import GainComparisonScreen from './src/screens/GainComparisonScreen';
+import BlockersScreen from './src/screens/BlockersScreen';
+import DietScreen from './src/screens/DietScreen';
+import AccomplishScreen from './src/screens/AccomplishScreen';
+import PotentialScreen from './src/screens/PotentialScreen';
+import HeightWeightScreen from './src/screens/HeightWeightScreen';
+import BirthdayScreen from './src/screens/BirthdayScreen';
+import GoalScreen from './src/screens/GoalScreen';
+import DesiredWeightScreen from './src/screens/DesiredWeightScreen';
+import RealisticTargetScreen from './src/screens/RealisticTargetScreen';
+import TrustScreen from './src/screens/TrustScreen';
+import AppleHealthScreen from './src/screens/AppleHealthScreen';
+import CaloriesRolloverScreen from './src/screens/CaloriesRolloverScreen';
+import RatingScreen from './src/screens/RatingScreen';
+import ReferralCodeScreen from './src/screens/ReferralCodeScreen';
+import AllDoneScreen from './src/screens/AllDoneScreen';
+import LoadingScreen from './src/screens/LoadingScreen';
+import PlanReadyScreen from './src/screens/PlanReadyScreen';
+import CreateAccountScreen from './src/screens/CreateAccountScreen';
+import HomeScreen from './src/screens/HomeScreen';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+type Screen =
+  | 'welcome' | 'gender' | 'workouts' | 'referral' | 'otherApps' | 'results'
+  | 'weightSpeed' | 'gainComparison' | 'blockers' | 'diet' | 'accomplish' | 'potential'
+  | 'heightWeight' | 'birthday' | 'goal' | 'desiredWeight' | 'realisticTarget'
+  | 'trust' | 'appleHealth' | 'caloriesBurned' | 'rollover'
+  | 'rating' | 'referralCode' | 'allDone' | 'loading' | 'planReady'
+  | 'createAccount' | 'home';
+
+interface OnboardingData {
+  gender?: string;
+  workouts?: string;
+  referralSource?: string;
+  triedOtherApps?: string;
+  weightSpeedLbs?: number;
+  blocker?: string;
+  diet?: string;
+  accomplish?: string;
+  height?: string;
+  weight?: string;
+  metric?: boolean;
+  birthday?: string;
+  goal?: string;
+  desiredWeightLbs?: number;
+  addCaloriesBurned?: boolean;
+  rolloverCalories?: boolean;
+  referralCode?: string;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const FLOW: Screen[] = [
+  'welcome', 'gender', 'workouts', 'referral', 'otherApps', 'results',
+  'weightSpeed', 'gainComparison', 'blockers', 'diet', 'accomplish', 'potential',
+  'heightWeight', 'birthday', 'goal', 'desiredWeight', 'realisticTarget',
+  'trust', 'appleHealth', 'caloriesBurned', 'rollover',
+  'rating', 'referralCode', 'allDone', 'loading', 'planReady',
+  'createAccount', 'home',
+];
+
+export default function App() {
+  const [screen, setScreen] = useState<Screen>('welcome');
+  const [data, setData] = useState<OnboardingData>({});
+
+  const next = () => {
+    const idx = FLOW.indexOf(screen);
+    if (idx < FLOW.length - 1) setScreen(FLOW[idx + 1]);
+  };
+
+  const back = () => {
+    const idx = FLOW.indexOf(screen);
+    if (idx > 0) setScreen(FLOW[idx - 1]);
+  };
+
+  const save = (patch: Partial<OnboardingData>) => {
+    setData((d) => ({ ...d, ...patch }));
+    next();
+  };
+
+  switch (screen) {
+    case 'welcome':
+      return <WelcomeScreen onGetStarted={next} onSignIn={() => {}} />;
+    case 'gender':
+      return <GenderScreen onContinue={(gender) => save({ gender })} onBack={back} />;
+    case 'workouts':
+      return <WorkoutsScreen onContinue={(workouts) => save({ workouts })} onBack={back} />;
+    case 'referral':
+      return <ReferralScreen onContinue={(referralSource) => save({ referralSource })} onBack={back} />;
+    case 'otherApps':
+      return <OtherAppsScreen onContinue={(triedOtherApps) => save({ triedOtherApps })} onBack={back} />;
+    case 'results':
+      return <ResultsScreen onContinue={next} onBack={back} />;
+    case 'weightSpeed':
+      return <WeightSpeedScreen onContinue={(weightSpeedLbs) => save({ weightSpeedLbs })} onBack={back} />;
+    case 'gainComparison':
+      return <GainComparisonScreen onContinue={next} onBack={back} />;
+    case 'blockers':
+      return <BlockersScreen onContinue={(blocker) => save({ blocker })} onBack={back} />;
+    case 'diet':
+      return <DietScreen onContinue={(diet) => save({ diet })} onBack={back} />;
+    case 'accomplish':
+      return <AccomplishScreen onContinue={(accomplish) => save({ accomplish })} onBack={back} />;
+    case 'potential':
+      return <PotentialScreen onContinue={next} onBack={back} />;
+    case 'heightWeight':
+      return <HeightWeightScreen onContinue={({ height, weight, metric }) => save({ height, weight, metric })} onBack={back} />;
+    case 'birthday':
+      return <BirthdayScreen onContinue={(birthday) => save({ birthday })} onBack={back} />;
+    case 'goal':
+      return <GoalScreen onContinue={(goal) => save({ goal })} onBack={back} />;
+    case 'desiredWeight':
+      return <DesiredWeightScreen onContinue={(desiredWeightLbs) => save({ desiredWeightLbs })} onBack={back} />;
+    case 'realisticTarget':
+      return <RealisticTargetScreen targetLbs={data.desiredWeightLbs} onContinue={next} onBack={back} />;
+    case 'trust':
+      return <TrustScreen onContinue={next} onBack={back} />;
+    case 'appleHealth':
+      return <AppleHealthScreen onContinue={next} onSkip={next} onBack={back} />;
+    case 'caloriesBurned':
+      return <CaloriesRolloverScreen question="burned"
+        onYes={() => save({ addCaloriesBurned: true })}
+        onNo={() => save({ addCaloriesBurned: false })}
+        onBack={back} />;
+    case 'rollover':
+      return <CaloriesRolloverScreen question="rollover"
+        onYes={() => save({ rolloverCalories: true })}
+        onNo={() => save({ rolloverCalories: false })}
+        onBack={back} />;
+    case 'rating':
+      return <RatingScreen onContinue={next} onBack={back} />;
+    case 'referralCode':
+      return <ReferralCodeScreen onContinue={(referralCode) => save({ referralCode })} onBack={back} />;
+    case 'allDone':
+      return <AllDoneScreen onContinue={next} onBack={back} />;
+    case 'loading':
+      return <LoadingScreen onComplete={next} />;
+    case 'planReady':
+      return <PlanReadyScreen
+        onGetStarted={next}
+        onBack={back}
+        goal={data.goal}
+        desiredWeightLbs={data.desiredWeightLbs}
+        birthday={data.birthday}
+      />;
+    case 'createAccount':
+      return <CreateAccountScreen onApple={next} onGoogle={next} onBack={back} />;
+    case 'home':
+      return <HomeScreen />;
+  }
+}
