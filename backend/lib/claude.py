@@ -2,6 +2,7 @@ import base64
 import json
 import anthropic
 from .config import settings
+from .token_tracker import usage_store
 
 client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
@@ -50,7 +51,13 @@ async def analyze_food_image(image_bytes: bytes, media_type: str = "image/jpeg")
         ],
     )
 
+    usage_store.record(
+        model=response.model,
+        purpose="food_analysis",
+        input_tokens=response.usage.input_tokens,
+        output_tokens=response.usage.output_tokens,
+    )
+
     raw = response.content[0].text if response.content[0].type == "text" else "{}"
-    # Strip markdown code fences if model wraps output
     raw = raw.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
     return json.loads(raw)

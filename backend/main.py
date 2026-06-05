@@ -13,6 +13,7 @@ from routers import (
     progress,
     streaks,
     referrals,
+    usage,
 )
 
 app = FastAPI(
@@ -46,3 +47,4 @@ app.include_router(exercise_logs.router)
 app.include_router(progress.router)
 app.include_router(streaks.router)
 app.include_router(referrals.router)
+app.include_router(usage.router)
