@@ -42,15 +42,18 @@ async def generate_user_plan(body: PlanGenerateRequest, user: dict = Depends(get
         diet_preference=body.diet_preference,
     )
 
-    # Deactivate any existing active plan
-    admin_supabase.table("plans").update({"is_active": False}).eq("user_id", user["id"]).eq("is_active", True).execute()
-
-    # Insert new plan
+    # Insert new plan first — if this fails, existing plan stays active
     res = admin_supabase.table("plans").insert({
         "user_id": user["id"],
         "is_active": True,
         **plan_data,
     }).execute()
+
+    if not res.data:
+        raise HTTPException(status_code=500, detail="Failed to create plan")
+
+    # Only deactivate old plans after new one is confirmed saved
+    admin_supabase.table("plans").update({"is_active": False}).eq("user_id", user["id"]).neq("id", res.data[0]["id"]).execute()
 
     return res.data[0]
 
