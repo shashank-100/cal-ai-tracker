@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { BackHandler } from 'react-native';
+import ErrorBoundary from './src/components/ErrorBoundary';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import GenderScreen from './src/screens/GenderScreen';
 import WorkoutsScreen from './src/screens/WorkoutsScreen';
@@ -68,6 +70,15 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('welcome');
   const [data, setData] = useState<OnboardingData>({});
 
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      const idx = FLOW.indexOf(screen);
+      if (idx > 0) { setScreen(FLOW[idx - 1]); return true; }
+      return false;
+    });
+    return () => sub.remove();
+  }, [screen]);
+
   const next = () => {
     const idx = FLOW.indexOf(screen);
     if (idx < FLOW.length - 1) setScreen(FLOW[idx + 1]);
@@ -83,7 +94,9 @@ export default function App() {
     next();
   };
 
-  switch (screen) {
+  return <ErrorBoundary>{renderScreen()}</ErrorBoundary>;
+
+  function renderScreen() { switch (screen) {
     case 'welcome':
       return <WelcomeScreen onGetStarted={next} onSignIn={() => {}} />;
     case 'gender':
@@ -152,5 +165,5 @@ export default function App() {
       return <CreateAccountScreen onApple={next} onGoogle={next} onBack={back} />;
     case 'home':
       return <HomeScreen />;
-  }
+  } }
 }
