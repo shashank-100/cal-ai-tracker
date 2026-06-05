@@ -104,10 +104,13 @@ async def search_by_barcode(
 
     result = _normalize_off(resp.json().get("product", {}))
 
-    # Cache it
-    admin_supabase.table("food_items").upsert({
-        **result,
-        "is_verified": True,
-    }, on_conflict="external_id,source").execute()
+    # Cache it — plain insert, ignore duplicate barcodes
+    try:
+        admin_supabase.table("food_items").insert({
+            **result,
+            "is_verified": True,
+        }).execute()
+    except Exception:
+        pass
 
     return {"source": "off", "result": result}
