@@ -6,9 +6,45 @@ Run: python -m pytest tests/test_api.py -v
 import pytest
 import httpx
 import os
+import sys
 
 BASE_URL = os.getenv("API_BASE_URL", "https://calai-production-72a1.up.railway.app")
-TOKEN = os.getenv("API_TEST_TOKEN", "")  # Set a valid Supabase JWT to test auth endpoints
+
+# Auto-generate a JWT using service role if no token is provided
+TEST_EMAIL = "test@calai.dev"
+TEST_PASSWORD = "TestCalAI123!"
+
+def _get_test_token() -> str:
+    token = os.getenv("API_TEST_TOKEN", "")
+    if token:
+        return token
+    try:
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+        from lib.config import settings
+        from supabase import create_client
+        admin = create_client(settings.supabase_url, settings.supabase_service_role_key)
+
+        # Ensure test user exists with known password
+        users = admin.auth.admin.list_users()
+        test_user = next((u for u in users if u.email == TEST_EMAIL), None)
+        if test_user:
+            admin.auth.admin.update_user_by_id(test_user.id, {"password": TEST_PASSWORD})
+        else:
+            admin.auth.admin.create_user({
+                "email": TEST_EMAIL,
+                "password": TEST_PASSWORD,
+                "email_confirm": True,
+            })
+
+        res = admin.auth.sign_in_with_password({"email": TEST_EMAIL, "password": TEST_PASSWORD})
+        if not res.session:
+            return ""
+        return res.session.access_token
+    except Exception as e:
+        print(f"\n[test setup] Could not auto-generate token: {e}")
+        return ""
+
+TOKEN = _get_test_token()
 
 client = httpx.Client(base_url=BASE_URL, timeout=15)
 auth_headers = {"Authorization": f"Bearer {TOKEN}"}

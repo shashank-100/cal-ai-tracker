@@ -3,8 +3,8 @@ from .supabase import admin_supabase
 
 
 def update_streak(user_id: str, log_date: date) -> dict:
-    res = admin_supabase.table("streaks").select("*").eq("user_id", user_id).single().execute()
-    streak = res.data or {"user_id": user_id, "current_streak": 0, "longest_streak": 0, "last_log_date": None}
+    res = admin_supabase.table("streaks").select("*").eq("user_id", user_id).limit(1).execute()
+    streak = (res.data[0] if res.data else None) or {"user_id": user_id, "current_streak": 0, "longest_streak": 0, "last_log_date": None}
 
     last = streak.get("last_log_date")
     current = streak.get("current_streak", 0)
