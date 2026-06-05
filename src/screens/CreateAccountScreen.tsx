@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Alert, ActivityIndicator } from 'react-native';
-import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import { supabase } from '../lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -17,35 +17,60 @@ export default function CreateAccountScreen({ onApple, onGoogle, onBack }: Props
   const handleGoogle = async () => {
     setLoading('google');
     try {
-      // In production replace with your real Google OAuth client ID
-      Alert.alert(
-        'Google Sign In',
-        'To enable real Google Sign-In, add your Google OAuth Client ID to the app. For now this will proceed as a guest.',
-        [
-          { text: 'Cancel', style: 'cancel', onPress: () => setLoading(null) },
-          { text: 'Continue as Guest', onPress: () => { setLoading(null); onGoogle(); } },
-        ]
-      );
-    } catch {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { skipBrowserRedirect: true },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          'calai://auth'
+        );
+        if (result.type === 'success') {
+          const url = new URL(result.url);
+          const access_token = url.searchParams.get('access_token') ?? '';
+          const refresh_token = url.searchParams.get('refresh_token') ?? '';
+          if (access_token) {
+            await supabase.auth.setSession({ access_token, refresh_token });
+            onGoogle();
+          }
+        }
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err?.message ?? 'Google sign-in failed. Please try again.');
+    } finally {
       setLoading(null);
-      Alert.alert('Error', 'Sign in failed. Please try again.');
     }
   };
 
   const handleApple = async () => {
     setLoading('apple');
     try {
-      Alert.alert(
-        'Apple Sign In',
-        'To enable real Apple Sign-In, configure your Apple Developer account. For now this will proceed as a guest.',
-        [
-          { text: 'Cancel', style: 'cancel', onPress: () => setLoading(null) },
-          { text: 'Continue as Guest', onPress: () => { setLoading(null); onApple(); } },
-        ]
-      );
-    } catch {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: { skipBrowserRedirect: true },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          'calai://auth'
+        );
+        if (result.type === 'success') {
+          const url = new URL(result.url);
+          const access_token = url.searchParams.get('access_token') ?? '';
+          const refresh_token = url.searchParams.get('refresh_token') ?? '';
+          if (access_token) {
+            await supabase.auth.setSession({ access_token, refresh_token });
+            onApple();
+          }
+        }
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err?.message ?? 'Apple sign-in failed. Please try again.');
+    } finally {
       setLoading(null);
-      Alert.alert('Error', 'Sign in failed. Please try again.');
     }
   };
 
@@ -84,7 +109,7 @@ export default function CreateAccountScreen({ onApple, onGoogle, onBack }: Props
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.skipBtn} onPress={onGoogle} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.skipBtn} onPress={onGoogle} activeOpacity={0.85} disabled={loading !== null}>
             <Text style={styles.skipText}>Skip for now</Text>
           </TouchableOpacity>
         </View>

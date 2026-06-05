@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { BackHandler } from 'react-native';
+import { BackHandler, View, ActivityIndicator } from 'react-native';
 import ErrorBoundary from './src/components/ErrorBoundary';
+import { useAuthStore } from './src/stores/authStore';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import GenderScreen from './src/screens/GenderScreen';
 import WorkoutsScreen from './src/screens/WorkoutsScreen';
@@ -62,13 +63,25 @@ const FLOW: Screen[] = [
   'weightSpeed', 'gainComparison', 'blockers', 'diet', 'accomplish', 'potential',
   'heightWeight', 'birthday', 'goal', 'desiredWeight', 'realisticTarget',
   'trust', 'appleHealth', 'caloriesBurned', 'rollover',
-  'rating', 'referralCode', 'allDone', 'loading', 'planReady',
-  'createAccount', 'home',
+  'rating', 'referralCode', 'allDone', 'createAccount', 'loading', 'planReady',
+  'home',
 ];
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('welcome');
   const [data, setData] = useState<OnboardingData>({});
+  const { loading: authLoading, session, initialize } = useAuthStore();
+
+  useEffect(() => {
+    const unsub = initialize();
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (!authLoading && session) {
+      setScreen('home');
+    }
+  }, [authLoading, session]);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -78,6 +91,14 @@ export default function App() {
     });
     return () => sub.remove();
   }, [screen]);
+
+  if (authLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
+  }
 
   const next = () => {
     const idx = FLOW.indexOf(screen);
@@ -151,8 +172,6 @@ export default function App() {
       return <ReferralCodeScreen onContinue={(referralCode) => save({ referralCode })} onBack={back} />;
     case 'allDone':
       return <AllDoneScreen onContinue={next} onBack={back} />;
-    case 'loading':
-      return <LoadingScreen onComplete={next} />;
     case 'planReady':
       return <PlanReadyScreen
         onGetStarted={next}
@@ -163,6 +182,8 @@ export default function App() {
       />;
     case 'createAccount':
       return <CreateAccountScreen onApple={next} onGoogle={next} onBack={back} />;
+    case 'loading':
+      return <LoadingScreen onboardingData={data} onComplete={next} />;
     case 'home':
       return <HomeScreen />;
   } }

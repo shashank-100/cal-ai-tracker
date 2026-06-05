@@ -1,35 +1,102 @@
+import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, ScrollView } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
+import { useAuthStore } from '../stores/authStore';
+import { api } from '../lib/api';
+import type { DailySummary, Streak } from '../lib/types';
+import FoodLogModal from '../components/FoodLogModal';
 
-const DAYS = [
-  { letter: 'T', num: 22 }, { letter: 'W', num: 23 }, { letter: 'T', num: 24 },
-  { letter: 'F', num: 25 }, { letter: 'S', num: 26 }, { letter: 'S', num: 27, active: true },
-  { letter: 'M', num: 28, future: true },
-];
+function todayISO(): string {
+  return new Date().toISOString().split('T')[0];
+}
 
-const MACROS = [
-  { label: 'Protein left', value: '166g', color: '#E87070', emoji: '🥩' },
-  { label: 'Carbs left', value: '295g', color: '#E8955A', emoji: '🌾' },
-  { label: 'Fat left', value: '68g', color: '#70A8E8', emoji: '💧' },
-];
+function weekDays() {
+  const today = new Date();
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - 3 + i);
+    const letters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    return {
+      letter: letters[d.getDay()],
+      num: d.getDate(),
+      active: i === 3,
+      future: i > 3,
+    };
+  });
+}
+
+const DAYS = weekDays();
 
 export default function HomeScreen() {
+  const { token } = useAuthStore();
+  const [summary, setSummary] = useState<DailySummary | null>(null);
+  const [streak, setStreak] = useState<Streak | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!token) return;
+    try {
+      const [s, st] = await Promise.all([
+        api.foodLogs.dailySummary(token, todayISO()),
+        api.streaks.get(token),
+      ]);
+      setSummary(s);
+      setStreak(st);
+    } catch {}
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const caloriesLeft = summary
+    ? Math.max(0, summary.calories_remaining)
+    : null;
+  const caloriesGoal = summary?.goal_calories ?? 2000;
+  const caloriesEaten = summary?.total_calories ?? 0;
+  const ringProgress = caloriesGoal > 0
+    ? Math.min(caloriesEaten / caloriesGoal, 1)
+    : 0;
+  const circumference = 2 * Math.PI * 32;
+  const offset = circumference * (1 - ringProgress);
+
+  const proteinLeft = summary
+    ? Math.max(0, (summary as any).goal_protein_g - summary.total_protein_g)
+    : null;
+  const carbsLeft = summary
+    ? Math.max(0, (summary as any).goal_carbs_g - summary.total_carbs_g)
+    : null;
+  const fatLeft = summary
+    ? Math.max(0, (summary as any).goal_fat_g - summary.total_fat_g)
+    : null;
+
+  const MACROS = [
+    { label: 'Protein left', value: proteinLeft != null ? `${Math.round(proteinLeft)}g` : '—', color: '#E87070', emoji: '🥩' },
+    { label: 'Carbs left', value: carbsLeft != null ? `${Math.round(carbsLeft)}g` : '—', color: '#E8955A', emoji: '🌾' },
+    { label: 'Fat left', value: fatLeft != null ? `${Math.round(fatLeft)}g` : '—', color: '#70A8E8', emoji: '💧' },
+  ];
+
+  const recentLogs = summary
+    ? [
+        ...(summary.entries_by_meal.breakfast ?? []),
+        ...(summary.entries_by_meal.lunch ?? []),
+        ...(summary.entries_by_meal.dinner ?? []),
+        ...(summary.entries_by_meal.snack ?? []),
+      ].slice(-5)
+    : [];
+
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#F7F7F7" />
       <View style={styles.container}>
-        {/* Header */}
         <View style={styles.topBar}>
           <View style={styles.brandRow}>
             <Text style={styles.brandIcon}>🍎</Text>
             <Text style={styles.brandName}>Cal AI</Text>
           </View>
           <View style={styles.streakBadge}>
-            <Text style={styles.streakText}>🔥 0</Text>
+            <Text style={styles.streakText}>🔥 {streak?.current_streak ?? 0}</Text>
           </View>
         </View>
 
-        {/* Week strip */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.weekStrip}>
           {DAYS.map((d) => (
             <View key={d.num} style={[styles.dayCol, d.active && styles.dayColActive]}>
@@ -46,24 +113,22 @@ export default function HomeScreen() {
         </ScrollView>
 
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-          {/* Calories card */}
           <View style={styles.calorieCard}>
             <View>
-              <Text style={styles.calorieNum}>2465</Text>
+              <Text style={styles.calorieNum}>{caloriesLeft ?? caloriesGoal}</Text>
               <Text style={styles.calorieLabel}>Calories left</Text>
             </View>
             <View style={styles.ringWrap}>
               <Svg width={80} height={80}>
                 <Circle cx={40} cy={40} r={32} stroke="#eee" strokeWidth={6} fill="none" />
                 <Circle cx={40} cy={40} r={32} stroke="#000" strokeWidth={6} fill="none"
-                  strokeDasharray={200} strokeDashoffset={50} strokeLinecap="round"
+                  strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round"
                   rotation="-90" origin="40,40" />
               </Svg>
               <Text style={styles.ringIcon}>🔥</Text>
             </View>
           </View>
 
-          {/* Macros */}
           <View style={styles.macroRow}>
             {MACROS.map((m) => (
               <View key={m.label} style={styles.macroCard}>
@@ -82,16 +147,27 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          {/* Recently logged */}
           <Text style={styles.sectionTitle}>Recently logged</Text>
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>You haven't uploaded any food</Text>
-            <Text style={styles.emptyBody}>Start tracking today's meals by taking a quick picture.</Text>
-            <Text style={styles.arrowDoodle}>↙</Text>
-          </View>
+          {recentLogs.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyTitle}>You haven't uploaded any food</Text>
+              <Text style={styles.emptyBody}>Start tracking today's meals by taking a quick picture.</Text>
+              <Text style={styles.arrowDoodle}>↙</Text>
+            </View>
+          ) : (
+            recentLogs.map((log) => (
+              <View key={log.id} style={styles.logRow}>
+                <View>
+                  <Text style={styles.logName}>{log.food_name}</Text>
+                  <Text style={styles.logMeta}>{log.meal_type} · {log.serving_qty} {log.serving_unit}</Text>
+                </View>
+                <Text style={styles.logCal}>{log.calories} kcal</Text>
+              </View>
+            ))
+          )}
+          <View style={{ height: 20 }} />
         </ScrollView>
 
-        {/* Tab bar */}
         <View style={styles.tabBar}>
           <TouchableOpacity style={styles.tabItem}>
             <Text style={styles.tabIcon}>⊞</Text>
@@ -105,11 +181,17 @@ export default function HomeScreen() {
             <Text style={styles.tabIcon}>⚙️</Text>
             <Text style={styles.tabLabel}>Settings</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.fab}>
+          <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
             <Text style={styles.fabText}>+</Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      <FoodLogModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onLogged={() => { setModalVisible(false); load(); }}
+      />
     </SafeAreaView>
   );
 }
@@ -175,6 +257,15 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 15, fontWeight: '700', color: '#000', marginBottom: 8, textAlign: 'center' },
   emptyBody: { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 22 },
   arrowDoodle: { fontSize: 28, marginTop: 8, transform: [{ rotate: '20deg' }] },
+  logRow: {
+    backgroundColor: '#fff', borderRadius: 12, padding: 14,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 8,
+    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
+  },
+  logName: { fontSize: 14, fontWeight: '600', color: '#000' },
+  logMeta: { fontSize: 12, color: '#888', marginTop: 2 },
+  logCal: { fontSize: 14, fontWeight: '700', color: '#000' },
   tabBar: {
     flexDirection: 'row', backgroundColor: '#fff', paddingVertical: 12,
     paddingHorizontal: 24, borderTopWidth: 1, borderTopColor: '#eee',

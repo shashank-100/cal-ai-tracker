@@ -3,6 +3,7 @@
     "name": "Cal AI Tracker",
     "slug": "cal-ai-tracker",
     "version": "1.0.0",
+    "scheme": "calai",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -25,7 +26,10 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": []
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -34,6 +38,16 @@
       "eas": {
         "projectId": ""
       }
-    }
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Cal AI to access your photos to log meals.",
+          "cameraPermission": "Allow Cal AI to use the camera to photograph your food."
+        }
+      ]
+    ]
   }
 }
