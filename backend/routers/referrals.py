@@ -53,12 +53,12 @@ async def validate_referral_code(body: ValidateRequest):
             admin_supabase.table("referrals")
             .select("id, referral_code, status")
             .eq("referral_code", body.referral_code.upper())
-            .single()
+            .limit(1)
             .execute()
         )
         if not res.data:
             raise HTTPException(status_code=404, detail="Invalid referral code")
-        return {"valid": True, "status": res.data["status"]}
+        return {"valid": True, "status": res.data[0]["status"]}
     except HTTPException:
         raise
     except Exception:
