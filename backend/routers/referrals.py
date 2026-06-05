@@ -48,13 +48,18 @@ async def generate_referral_code(user: dict = Depends(get_current_user)):
 @router.post("/validate")
 async def validate_referral_code(body: ValidateRequest):
     # Public endpoint — no auth required
-    res = (
-        admin_supabase.table("referrals")
-        .select("id, referral_code, status")
-        .eq("referral_code", body.referral_code.upper())
-        .single()
-        .execute()
-    )
-    if not res.data:
+    try:
+        res = (
+            admin_supabase.table("referrals")
+            .select("id, referral_code, status")
+            .eq("referral_code", body.referral_code.upper())
+            .single()
+            .execute()
+        )
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Invalid referral code")
+        return {"valid": True, "status": res.data["status"]}
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(status_code=404, detail="Invalid referral code")
-    return {"valid": True, "status": res.data["status"]}
