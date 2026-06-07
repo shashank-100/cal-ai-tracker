@@ -1,7 +1,8 @@
 import logging
+import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -62,6 +63,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+def privacy_policy():
+    path = os.path.join(os.path.dirname(__file__), "..", "privacy-policy.html")
+    with open(os.path.normpath(path), "r") as f:
+        return f.read()
 
 
 app.include_router(profile.router)
