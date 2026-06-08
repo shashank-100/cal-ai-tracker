@@ -67,8 +67,8 @@ def health():
 
 @app.get("/privacy", response_class=HTMLResponse)
 def privacy_policy():
-    path = os.path.join(os.path.dirname(__file__), "..", "privacy-policy.html")
-    with open(os.path.normpath(path), "r") as f:
+    path = os.path.join(os.path.dirname(__file__), "privacy-policy.html")
+    with open(path, "r") as f:
         return f.read()
 
 
