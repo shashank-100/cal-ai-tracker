@@ -14,13 +14,13 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.shashank.calaitracker",
+      "bundleIdentifier": "com.calai.tracker",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.shashank.calaitracker",
+      "package": "com.calai.tracker",
       "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#ffffff",
