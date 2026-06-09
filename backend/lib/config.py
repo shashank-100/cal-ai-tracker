@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     usda_api_key: str = "DEMO_KEY"
     app_env: str = "development"
     database_url: str = ""
+    admin_secret: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
