@@ -8,7 +8,12 @@ router = APIRouter(prefix="/profile", tags=["profile"])
 
 @router.get("")
 async def get_profile(user: dict = Depends(get_current_user)):
-    res = admin_supabase.table("users").select("*").eq("id", user["id"]).limit(1).execute()
+    res = admin_supabase.table("users").select(
+        "id, email, full_name, gender, birthday, height_cm, weight_kg, goal, "
+        "desired_weight_kg, weight_speed_kg_week, workouts_per_week, diet_preference, "
+        "blocker, accomplish, rollover_calories, add_calories_burned, metric, "
+        "referral_source, onboarding_complete, notification_preferences, preferences, created_at"
+    ).eq("id", user["id"]).limit(1).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Profile not found")
     return res.data[0]

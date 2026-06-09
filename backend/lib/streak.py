@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from .supabase import admin_supabase
 
 
@@ -29,7 +29,7 @@ def update_streak(user_id: str, log_date: date) -> dict:
         "current_streak": current,
         "longest_streak": longest,
         "last_log_date": log_date.isoformat(),
-        "updated_at": "now()",
+        "updated_at": datetime.now(timezone.utc).isoformat(),
     }, on_conflict="user_id").execute()
 
     return {"current_streak": current, "longest_streak": longest}

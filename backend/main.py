@@ -30,10 +30,22 @@ logger = logging.getLogger("calai")
 
 limiter = Limiter(key_func=get_remote_address)
 
+from lib.config import settings as _settings
+
+if not _settings.admin_secret:
+    logger.warning("ADMIN_SECRET is not set — /usage endpoint is disabled")
+
+_docs_url = "/docs" if _settings.app_env != "production" else None
+_redoc_url = "/redoc" if _settings.app_env != "production" else None
+_openapi_url = "/openapi.json" if _settings.app_env != "production" else None
+
 app = FastAPI(
     title="Cal AI API",
     version="1.0.0",
     description="Backend API for Cal AI calorie tracking app",
+    docs_url=_docs_url,
+    redoc_url=_redoc_url,
+    openapi_url=_openapi_url,
 )
 
 app.state.limiter = limiter
@@ -49,8 +61,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type", "X-Admin-Secret"],
 )
 
 

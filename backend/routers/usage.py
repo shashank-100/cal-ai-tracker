@@ -6,7 +6,9 @@ router = APIRouter(prefix="/usage", tags=["usage"])
 
 
 def _require_admin(x_admin_secret: str = Header(default="")):
-    if not settings.admin_secret or x_admin_secret != settings.admin_secret:
+    if not settings.admin_secret:
+        raise HTTPException(status_code=500, detail="Admin secret not configured")
+    if x_admin_secret != settings.admin_secret:
         raise HTTPException(status_code=403, detail="Admin only")
 
 

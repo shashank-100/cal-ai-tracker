@@ -10,9 +10,8 @@ import {
 } from '@react-native-google-signin/google-signin';
 import { supabase } from '../lib/supabase';
 
-// Configure Google Sign-In — replace WEB_CLIENT_ID with your Google OAuth Web Client ID
 GoogleSignin.configure({
-  webClientId: '511681154456-n6mn1ao1pg0sgbcjnc2869bvsabhut53.apps.googleusercontent.com',
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
   scopes: ['profile', 'email'],
 });
 
@@ -95,6 +94,7 @@ export default function CreateAccountScreen({ onApple, onGoogle, onSkip, onBack 
         <Text style={styles.subtitle}>Save your plan and track your progress</Text>
 
         <View style={styles.btnGroup}>
+          {/* Apple Sign-In — coming soon
           <TouchableOpacity style={styles.appleBtn} onPress={handleApple} activeOpacity={0.85} disabled={loading !== null}>
             {loading === 'apple' ? <ActivityIndicator color="#fff" /> : (
               <>
@@ -103,6 +103,7 @@ export default function CreateAccountScreen({ onApple, onGoogle, onSkip, onBack 
               </>
             )}
           </TouchableOpacity>
+          */}
 
           <TouchableOpacity style={styles.googleBtn} onPress={handleGoogle} activeOpacity={0.85} disabled={loading !== null}>
             {loading === 'google' ? <ActivityIndicator color="#000" /> : (

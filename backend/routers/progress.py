@@ -76,8 +76,8 @@ async def weekly_progress(
 
 @router.get("/monthly")
 async def monthly_progress(
-    year: int = Query(default=None),
-    month: int = Query(default=None),
+    year: int = Query(default=None, ge=2020, le=2100),
+    month: int = Query(default=None, ge=1, le=12),
     user: dict = Depends(get_current_user),
 ):
     today = date.today()

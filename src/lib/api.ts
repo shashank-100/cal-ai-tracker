@@ -114,6 +114,16 @@ export const api = {
         body: JSON.stringify(body),
       }),
   },
+
+  progress: {
+    weekly: (token: string, weekStart?: string) =>
+      request<any>(`/progress/weekly${weekStart ? `?week_start=${weekStart}` : ''}`, token),
+
+    monthly: (token: string, year?: number, month?: number) => {
+      const params = year && month ? `?year=${year}&month=${month}` : '';
+      return request<any>(`/progress/monthly${params}`, token);
+    },
+  },
 };
 
 export { ApiError };

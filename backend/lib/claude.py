@@ -1,10 +1,13 @@
 import base64
 import json
+import logging
 import anthropic
+
+logger = logging.getLogger(__name__)
 from .config import settings
 from .token_tracker import usage_store
 
-client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
 
 FOOD_ANALYSIS_PROMPT = """Analyze this food image and return ONLY valid JSON with this exact shape — no markdown, no explanation:
 {
@@ -30,9 +33,10 @@ If confidence is below 0.5 because the image is unclear, still return your best 
 async def analyze_food_image(image_bytes: bytes, media_type: str = "image/jpeg") -> dict:
     b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
 
-    response = client.messages.create(
+    response = await client.messages.create(
         model="claude-opus-4-5",
         max_tokens=1024,
+        system=FOOD_ANALYSIS_PROMPT,
         messages=[
             {
                 "role": "user",
@@ -45,7 +49,7 @@ async def analyze_food_image(image_bytes: bytes, media_type: str = "image/jpeg")
                             "data": b64,
                         },
                     },
-                    {"type": "text", "text": FOOD_ANALYSIS_PROMPT},
+                    {"type": "text", "text": "Analyze this food image."},
                 ],
             }
         ],
@@ -63,4 +67,5 @@ async def analyze_food_image(image_bytes: bytes, media_type: str = "image/jpeg")
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
-        raise ValueError(f"Claude returned non-JSON response: {raw[:200]}")
+        logger.debug("Claude non-JSON response: %s", raw[:200])
+        raise ValueError("Claude returned non-JSON response")

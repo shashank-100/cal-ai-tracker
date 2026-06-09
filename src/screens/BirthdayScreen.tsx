@@ -40,7 +40,13 @@ export default function BirthdayScreen({ onContinue, onBack }: Props) {
 
         <TouchableOpacity
           style={styles.cta}
-          onPress={() => onContinue(`${month} ${day}, ${year}`)}
+          onPress={() => {
+            const d = new Date(`${month} ${day}, ${year}`);
+            const monthIdx = ['January','February','March','April','May','June','July','August','September','October','November','December'].indexOf(month);
+            if (isNaN(d.getTime()) || d.getMonth() !== monthIdx) return;
+            const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            onContinue(iso);
+          }}
           activeOpacity={0.85}
         >
           <Text style={styles.ctaText}>Continue</Text>

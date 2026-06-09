@@ -1,5 +1,6 @@
 from datetime import date
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Literal, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
 from middleware.auth import get_current_user
 from lib.supabase import admin_supabase
 from lib.streak import update_streak
@@ -9,7 +10,7 @@ router = APIRouter(prefix="/food-logs", tags=["food-logs"])
 
 
 @router.get("")
-async def list_food_logs(log_date: date, meal_type: str = None, user: dict = Depends(get_current_user)):
+async def list_food_logs(log_date: date, meal_type: Optional[Literal["breakfast", "lunch", "dinner", "snack"]] = Query(default=None), user: dict = Depends(get_current_user)):
     query = (
         admin_supabase.table("food_logs")
         .select("*")
@@ -65,6 +66,16 @@ async def daily_summary(log_date: date, user: dict = Depends(get_current_user)):
     )
     goal_calories = plan_res.data[0]["calories_target"] if plan_res.data else 2000
 
+    # Check user preference for counting burned calories
+    profile_res = (
+        admin_supabase.table("users")
+        .select("add_calories_burned")
+        .eq("id", user["id"])
+        .limit(1)
+        .execute()
+    )
+    add_calories_burned = (profile_res.data[0].get("add_calories_burned", True) if profile_res.data else True)
+
     # Water
     water_res = (
         admin_supabase.table("water_logs")
@@ -85,8 +96,8 @@ async def daily_summary(log_date: date, user: dict = Depends(get_current_user)):
         "calories_burned": calories_burned,
         "water_ml": water_ml,
         "goal_calories": goal_calories,
-        "net_calories": round(totals["calories"] - calories_burned, 1),
-        "calories_remaining": round(goal_calories - totals["calories"] + calories_burned, 1),
+        "net_calories": round(totals["calories"] - (calories_burned if add_calories_burned else 0), 1),
+        "calories_remaining": round(goal_calories - totals["calories"] + (calories_burned if add_calories_burned else 0), 1),
         "entries_by_meal": entries_by_meal,
     }
 
@@ -94,6 +105,7 @@ async def daily_summary(log_date: date, user: dict = Depends(get_current_user)):
 @router.post("")
 async def create_food_log(body: FoodLogCreate, user: dict = Depends(get_current_user)):
     data = body.model_dump()
+    data.pop("ai_raw_response", None)  # never store client-supplied raw response
     data["user_id"] = user["id"]
     data["log_date"] = data["log_date"].isoformat()
 
@@ -127,5 +139,7 @@ async def update_food_log(log_id: str, body: FoodLogUpdate, user: dict = Depends
 
 @router.delete("/{log_id}")
 async def delete_food_log(log_id: str, user: dict = Depends(get_current_user)):
-    admin_supabase.table("food_logs").delete().eq("id", log_id).eq("user_id", user["id"]).execute()
+    res = admin_supabase.table("food_logs").delete().eq("id", log_id).eq("user_id", user["id"]).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Log entry not found")
     return {"deleted": True}

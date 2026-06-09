@@ -28,6 +28,10 @@ yarn-error.*
 
 # macOS
 .DS_Store
+
+# Editor
+.kilo/
+.vscode/
 *.pem
 
 # local env files

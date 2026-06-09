@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   title: string;
@@ -27,10 +28,11 @@ export default function OnboardingLayout({
   continueLabel = 'Continue',
   showLanguage = true,
 }: Props) {
+  const insets = useSafeAreaInsets();
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <View style={styles.header}>
           {onBack ? (
             <TouchableOpacity onPress={onBack} style={styles.backBtn}>
@@ -77,7 +79,6 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     paddingVertical: 18,
     alignItems: 'center',
-    marginBottom: 12,
   },
   ctaText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

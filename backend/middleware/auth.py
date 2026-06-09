@@ -1,8 +1,9 @@
+import logging
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from lib.supabase import supabase
-from lib.config import settings
+from lib.supabase import admin_supabase
 
+logger = logging.getLogger(__name__)
 bearer = HTTPBearer()
 
 
@@ -11,13 +12,13 @@ async def get_current_user(
 ) -> dict:
     token = credentials.credentials
     try:
-        user_resp = supabase.auth.get_user(token)
-        if not user_resp or not user_resp.user:
+        res = admin_supabase.auth.get_user(token)
+        user = res.user
+        if not user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
-        return {"id": user_resp.user.id, "email": user_resp.user.email, "token": token}
+        return {"id": user.id, "email": user.email or ""}
     except HTTPException:
         raise
     except Exception as e:
-        import logging
-        logging.getLogger(__name__).warning("Auth error: %s", type(e).__name__)
+        logger.warning("Auth error: %s", e)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")

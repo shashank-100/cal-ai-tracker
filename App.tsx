@@ -29,6 +29,8 @@ import LoadingScreen from './src/screens/LoadingScreen';
 import PlanReadyScreen from './src/screens/PlanReadyScreen';
 import CreateAccountScreen from './src/screens/CreateAccountScreen';
 import HomeScreen from './src/screens/HomeScreen';
+import ProgressScreen from './src/screens/ProgressScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 
 type Screen =
   | 'welcome' | 'gender' | 'workouts' | 'referral' | 'otherApps' | 'results'
@@ -36,7 +38,7 @@ type Screen =
   | 'heightWeight' | 'birthday' | 'goal' | 'desiredWeight' | 'realisticTarget'
   | 'trust' | 'appleHealth' | 'caloriesBurned' | 'rollover'
   | 'rating' | 'referralCode' | 'allDone' | 'loading' | 'planReady'
-  | 'createAccount' | 'home';
+  | 'createAccount' | 'home' | 'progress' | 'settings';
 
 interface OnboardingData {
   gender?: string;
@@ -79,12 +81,16 @@ export default function App() {
 
   useEffect(() => {
     if (!authLoading && session) {
-      setScreen('home');
+      const postAuthScreens: Screen[] = ['home', 'progress', 'settings'];
+      const onboardingComplete = postAuthScreens.includes(screen) || FLOW.indexOf(screen) >= FLOW.indexOf('loading');
+      if (!onboardingComplete) setScreen('home');
     }
   }, [authLoading, session]);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (screen === 'progress' || screen === 'settings') { setScreen('home'); return true; }
+      if (screen === 'home') return false;
       const idx = FLOW.indexOf(screen);
       if (idx > 0) { setScreen(FLOW[idx - 1]); return true; }
       return false;
@@ -185,6 +191,10 @@ export default function App() {
     case 'loading':
       return <LoadingScreen onboardingData={data} onComplete={next} />;
     case 'home':
-      return <HomeScreen />;
+      return <HomeScreen onNavigate={(s: 'progress' | 'settings') => setScreen(s)} />;
+    case 'progress':
+      return <ProgressScreen onBack={() => setScreen('home')} />;
+    case 'settings':
+      return <SettingsScreen onBack={() => setScreen('home')} />;
   } }
 }

@@ -1,6 +1,6 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from middleware.auth import get_current_user
 from lib.supabase import admin_supabase
 
@@ -8,14 +8,14 @@ router = APIRouter(prefix="/referrals", tags=["referrals"])
 
 
 class ValidateRequest(BaseModel):
-    referral_code: str
+    referral_code: str = Field(max_length=8)
 
 
 @router.get("")
 async def get_referrals(user: dict = Depends(get_current_user)):
     res = (
         admin_supabase.table("referrals")
-        .select("*")
+        .select("referral_code, status, created_at")
         .eq("referrer_id", user["id"])
         .execute()
     )
@@ -60,5 +60,5 @@ async def validate_referral_code(body: ValidateRequest, user: dict = Depends(get
         return {"valid": True, "status": res.data[0]["status"]}
     except HTTPException:
         raise
-    except Exception:
-        raise HTTPException(status_code=404, detail="Invalid referral code")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to validate referral code") from e

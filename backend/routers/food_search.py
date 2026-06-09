@@ -52,10 +52,11 @@ async def search_food(
     user: dict = Depends(get_current_user),
 ):
     # Check local cache first (pg_trgm search)
+    safe_q = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     cache_res = (
         admin_supabase.table("food_items")
         .select("*")
-        .ilike("name", f"%{q}%")
+        .ilike("name", f"%{safe_q}%")
         .eq("is_verified", True)
         .limit(limit)
         .execute()
@@ -79,7 +80,7 @@ async def search_food(
 
 @router.get("/barcode")
 async def search_by_barcode(
-    upc: str = Query(..., min_length=8),
+    upc: str = Query(..., min_length=8, max_length=14, pattern=r"^[0-9]+$"),
     user: dict = Depends(get_current_user),
 ):
     # Check local cache

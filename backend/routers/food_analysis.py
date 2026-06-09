@@ -7,7 +7,11 @@ from lib.claude import analyze_food_image
 from lib.supabase import admin_supabase
 
 router = APIRouter(prefix="/food-analysis", tags=["food-analysis"])
-limiter = Limiter(key_func=get_remote_address)
+
+def _user_or_ip(request: Request) -> str:
+    return getattr(request.state, "user_id", None) or get_remote_address(request)
+
+limiter = Limiter(key_func=_user_or_ip)
 
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
@@ -20,7 +24,9 @@ async def analyze_food(
     meal_type: str = Form(default="lunch"),
     user: dict = Depends(get_current_user),
 ):
-    if image.content_type not in ALLOWED_TYPES:
+    # Set user_id on request.state before rate limit key is evaluated on retry
+    request.state.user_id = user["id"]
+    if not image.content_type or image.content_type not in ALLOWED_TYPES:
         raise HTTPException(status_code=400, detail=f"Unsupported image type: {image.content_type}")
 
     image_bytes = await image.read()

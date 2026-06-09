@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, ScrollView } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useAuthStore } from '../stores/authStore';
@@ -26,16 +26,22 @@ function weekDays() {
   });
 }
 
-const DAYS = weekDays();
+interface Props {
+  onNavigate?: (screen: 'progress' | 'settings') => void;
+}
 
-export default function HomeScreen() {
+export default function HomeScreen({ onNavigate }: Props) {
   const { token } = useAuthStore();
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [streak, setStreak] = useState<Streak | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const todayStr = todayISO();
+  const DAYS = useMemo(() => weekDays(), [todayStr]);
 
   const load = useCallback(async () => {
     if (!token) return;
+    setLoadError(false);
     try {
       const [s, st, plan] = await Promise.all([
         api.foodLogs.dailySummary(token, todayISO()),
@@ -51,6 +57,7 @@ export default function HomeScreen() {
       setStreak(st);
     } catch (err) {
       console.warn('HomeScreen load failed:', err);
+      setLoadError(true);
     }
   }, [token]);
 
@@ -91,6 +98,19 @@ export default function HomeScreen() {
         ...(summary.entries_by_meal.snack ?? []),
       ].slice(-5)
     : [];
+
+  if (loadError) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Couldn't load your data.</Text>
+          <TouchableOpacity onPress={load} style={styles.retryButton}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -182,11 +202,11 @@ export default function HomeScreen() {
             <Text style={styles.tabIcon}>⊞</Text>
             <Text style={[styles.tabLabel, styles.tabLabelActive]}>Home</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.tabItem}>
+          <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate?.('progress')}>
             <Text style={styles.tabIcon}>📊</Text>
             <Text style={styles.tabLabel}>Progress</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.tabItem}>
+          <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate?.('settings')}>
             <Text style={styles.tabIcon}>⚙️</Text>
             <Text style={styles.tabLabel}>Settings</Text>
           </TouchableOpacity>
@@ -290,4 +310,8 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, elevation: 6,
   },
   fabText: { fontSize: 28, color: '#fff', lineHeight: 32 },
+  errorContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
+  errorText: { fontSize: 16, color: '#444' },
+  retryButton: { paddingHorizontal: 24, paddingVertical: 10, backgroundColor: '#000', borderRadius: 20 },
+  retryText: { color: '#fff', fontWeight: '600' },
 });

@@ -4,6 +4,7 @@ Falls back to in-memory totals if the DB insert fails so food analysis never bre
 """
 import logging
 import threading
+from datetime import datetime, timezone
 
 logger = logging.getLogger("calai.token_tracker")
 
@@ -39,7 +40,7 @@ class _UsageStore:
         try:
             res = admin_supabase.table("usage_logs").select(
                 "model, purpose, input_tokens, output_tokens, total_tokens, created_at"
-            ).order("created_at", desc=False).execute()
+            ).order("created_at", desc=False).limit(10000).execute()
 
             rows = res.data or []
             total_input = sum(r["input_tokens"] for r in rows)
@@ -106,7 +107,8 @@ class _UsageStore:
     def reset(self):
         from lib.supabase import admin_supabase
         try:
-            admin_supabase.table("usage_logs").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+            cutoff = datetime.now(timezone.utc).isoformat()
+            admin_supabase.table("usage_logs").delete().lte("created_at", cutoff).execute()
         except Exception as e:
             logger.error("Failed to reset usage logs: %s", e)
         with self._lock:
