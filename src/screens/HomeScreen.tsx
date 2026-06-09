@@ -49,7 +49,9 @@ export default function HomeScreen() {
         goal_fat_g: plan?.fat_g ?? undefined,
       });
       setStreak(st);
-    } catch {}
+    } catch (err) {
+      console.warn('HomeScreen load failed:', err);
+    }
   }, [token]);
 
   useEffect(() => { load(); }, [load]);

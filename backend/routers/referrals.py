@@ -46,8 +46,7 @@ async def generate_referral_code(user: dict = Depends(get_current_user)):
 
 
 @router.post("/validate")
-async def validate_referral_code(body: ValidateRequest):
-    # Public endpoint — no auth required
+async def validate_referral_code(body: ValidateRequest, user: dict = Depends(get_current_user)):
     try:
         res = (
             admin_supabase.table("referrals")

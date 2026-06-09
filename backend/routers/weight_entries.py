@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from middleware.auth import get_current_user
 from lib.supabase import admin_supabase
 from models.schemas import WeightEntryCreate
@@ -7,7 +7,7 @@ router = APIRouter(prefix="/weight-entries", tags=["weight-entries"])
 
 
 @router.get("")
-async def list_weight_entries(limit: int = 90, user: dict = Depends(get_current_user)):
+async def list_weight_entries(limit: int = Query(default=90, ge=1, le=365), user: dict = Depends(get_current_user)):
     res = (
         admin_supabase.table("weight_entries")
         .select("*")

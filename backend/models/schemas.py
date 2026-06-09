@@ -9,8 +9,8 @@ class ProfileUpdate(BaseModel):
     full_name: Optional[str] = None
     gender: Optional[str] = None
     birthday: Optional[date] = None
-    height_cm: Optional[float] = None
-    weight_kg: Optional[float] = None
+    height_cm: Optional[float] = Field(default=None, gt=0, le=300)
+    weight_kg: Optional[float] = Field(default=None, gt=0, le=700)
     goal: Optional[Literal["lose", "maintain", "gain"]] = None
     desired_weight_kg: Optional[float] = None
     weight_speed_kg_week: Optional[float] = None
@@ -96,5 +96,5 @@ class ExerciseLogCreate(BaseModel):
     log_date: date
     activity_name: str
     duration_min: Optional[int] = None
-    calories_burned: int
+    calories_burned: int = Field(ge=0, le=10000)
     source: Literal["manual", "apple_health", "google_fit"] = "manual"
