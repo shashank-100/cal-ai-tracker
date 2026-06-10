@@ -62,6 +62,8 @@ export default function LoadingScreen({ onboardingData, onComplete }: Props) {
   const [percent, setPercent] = useState(0);
   const [checked, setChecked] = useState<number[]>([]);
   const called = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
   const { token } = useAuthStore();
 
   useEffect(() => {
@@ -114,14 +116,14 @@ export default function LoadingScreen({ onboardingData, onComplete }: Props) {
     api.plans.generate(token, body)
       .then(() => {
         setPercent(100);
-        setTimeout(onComplete, 400);
+        setTimeout(() => onCompleteRef.current(), 400);
       })
       .catch(() => {
         setPercent(100);
         Alert.alert(
           'Setup incomplete',
           'Could not generate your plan. You can set it up from Settings.',
-          [{ text: 'Continue', onPress: onComplete }],
+          [{ text: 'Continue', onPress: () => onCompleteRef.current() }],
           { cancelable: false }
         );
       });

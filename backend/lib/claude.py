@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 from .config import settings
 from .token_tracker import usage_store
 
-client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key, timeout=30.0)
 
 FOOD_ANALYSIS_PROMPT = """Analyze this food image and return ONLY valid JSON with this exact shape — no markdown, no explanation:
 {

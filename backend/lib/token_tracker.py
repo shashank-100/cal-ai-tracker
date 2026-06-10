@@ -38,51 +38,44 @@ class _UsageStore:
     def summary(self) -> dict:
         from lib.supabase import admin_supabase
         try:
-            res = admin_supabase.table("usage_logs").select(
-                "model, purpose, input_tokens, output_tokens, total_tokens, created_at"
-            ).order("created_at", desc=False).limit(10000).execute()
+            # Aggregate totals via SQL
+            totals_res = admin_supabase.rpc("usage_summary").execute()
+            totals = (totals_res.data or [{}])[0]
+            total_input = totals.get("total_input", 0) or 0
+            total_output = totals.get("total_output", 0) or 0
+            total_tokens = totals.get("total_tokens", 0) or 0
+            total_calls = totals.get("total_calls", 0) or 0
 
-            rows = res.data or []
-            total_input = sum(r["input_tokens"] for r in rows)
-            total_output = sum(r["output_tokens"] for r in rows)
-            total_tokens = sum(r["total_tokens"] for r in rows)
-
+            # Group by model
+            by_model_res = admin_supabase.rpc("usage_by_model").execute()
             by_model: dict = {}
+            for r in (by_model_res.data or []):
+                by_model[r["model"]] = {"input": r["total_input"], "output": r["total_output"], "calls": r["calls"]}
+
+            # Group by purpose
+            by_purpose_res = admin_supabase.rpc("usage_by_purpose").execute()
             by_purpose: dict = {}
-            for r in rows:
-                m = by_model.setdefault(r["model"], {"input": 0, "output": 0, "calls": 0})
-                m["input"] += r["input_tokens"]
-                m["output"] += r["output_tokens"]
-                m["calls"] += 1
+            for r in (by_purpose_res.data or []):
+                by_purpose[r["purpose"]] = {"input": r["total_input"], "output": r["total_output"], "calls": r["calls"]}
 
-                p = by_purpose.setdefault(r["purpose"], {"input": 0, "output": 0, "calls": 0})
-                p["input"] += r["input_tokens"]
-                p["output"] += r["output_tokens"]
-                p["calls"] += 1
+            # Recent 20 rows only
+            recent_res = admin_supabase.table("usage_logs").select(
+                "model, purpose, input_tokens, output_tokens, total_tokens, created_at"
+            ).order("created_at", desc=True).limit(20).execute()
 
-            # claude-opus-4-5 pricing: $15/$75 per 1M tokens
+            # claude-opus-4-5 pricing: $15/$60 per 1M tokens
             input_cost = total_input / 1_000_000 * 15.0
-            output_cost = total_output / 1_000_000 * 75.0
+            output_cost = total_output / 1_000_000 * 60.0
 
             return {
-                "total_calls": len(rows),
+                "total_calls": total_calls,
                 "total_input_tokens": total_input,
                 "total_output_tokens": total_output,
                 "total_tokens": total_tokens,
                 "estimated_cost_usd": round(input_cost + output_cost, 6),
                 "by_model": by_model,
                 "by_purpose": by_purpose,
-                "recent_calls": [
-                    {
-                        "model": r["model"],
-                        "purpose": r["purpose"],
-                        "input_tokens": r["input_tokens"],
-                        "output_tokens": r["output_tokens"],
-                        "total_tokens": r["total_tokens"],
-                        "created_at": r["created_at"],
-                    }
-                    for r in rows[-20:]
-                ],
+                "recent_calls": list(reversed(recent_res.data or [])),
             }
         except Exception as e:
             logger.error("Failed to read usage logs from DB: %s", e)

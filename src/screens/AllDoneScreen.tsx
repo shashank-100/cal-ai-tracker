@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   onContinue: () => void;
@@ -6,10 +7,11 @@ interface Props {
 }
 
 export default function AllDoneScreen({ onContinue, onBack }: Props) {
+  const insets = useSafeAreaInsets();
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>
             <Text style={styles.backArrow}>←</Text>
@@ -59,7 +61,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '700', color: '#000', textAlign: 'center', lineHeight: 36 },
   cta: {
     backgroundColor: '#000', borderRadius: 32, paddingVertical: 18,
-    alignItems: 'center', marginBottom: 12,
+    alignItems: 'center',
   },
   ctaText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

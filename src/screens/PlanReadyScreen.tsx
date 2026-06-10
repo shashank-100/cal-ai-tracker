@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 
 interface Props {
@@ -27,6 +28,7 @@ function calcTargetDate(weightLbs: number, goal: string, speedLbs = 1.0): string
 }
 
 export default function PlanReadyScreen({ onGetStarted, onBack, goal = 'Gain weight', desiredWeightLbs = 10, birthday }: Props) {
+  const insets = useSafeAreaInsets();
   const currentWeight = 155; // default until we collect current weight
   const targetDiff = Math.abs(desiredWeightLbs - currentWeight);
   const macros = calcMacros(goal, currentWeight);
@@ -42,7 +44,7 @@ export default function PlanReadyScreen({ onGetStarted, onBack, goal = 'Gain wei
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>
             <Text style={styles.backArrow}>←</Text>
@@ -148,7 +150,7 @@ const styles = StyleSheet.create({
   macroUnit: { fontSize: 14, fontWeight: '400' },
   cta: {
     backgroundColor: '#000', borderRadius: 32, paddingVertical: 18,
-    alignItems: 'center', marginBottom: 12,
+    alignItems: 'center',
   },
   ctaText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

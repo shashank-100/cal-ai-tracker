@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
-  StatusBar, ScrollView, Switch,
+  StatusBar, Switch, FlatList, ViewToken,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   onContinue: (data: { height: string; weight: string; metric: boolean }) => void;
@@ -15,8 +16,13 @@ const WEIGHTS_IMPERIAL = Array.from({ length: 200 }, (_, i) => `${i + 80} lb`);
 const HEIGHTS_METRIC = Array.from({ length: 100 }, (_, i) => `${i + 100} cm`);
 const WEIGHTS_METRIC = Array.from({ length: 200 }, (_, i) => `${i + 30} kg`);
 
+const ITEM_HEIGHT = 44;
+const VISIBLE_ITEMS = 5;
+const PICKER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
+
 export default function HeightWeightScreen({ onContinue, onBack }: Props) {
   const [metric, setMetric] = useState(false);
+  const insets = useSafeAreaInsets();
   const [height, setHeight] = useState('5 ft');
   const [inch, setInch] = useState('9 in');
   const [weight, setWeight] = useState('155 lb');
@@ -26,7 +32,7 @@ export default function HeightWeightScreen({ onContinue, onBack }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>
             <Text style={styles.backArrow}>←</Text>
@@ -51,6 +57,7 @@ export default function HeightWeightScreen({ onContinue, onBack }: Props) {
         </View>
 
         <View style={styles.pickersRow}>
+          <View style={styles.selectionOverlay} pointerEvents="none" />
           {metric ? (
             <>
               <View style={styles.pickerCol}>
@@ -101,24 +108,42 @@ function ScrollPicker({ items, selected, onSelect }: {
   selected: string;
   onSelect: (v: string) => void;
 }) {
+  const initialIndex = items.indexOf(selected);
+
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    const mid = viewableItems[Math.floor(viewableItems.length / 2)];
+    if (mid?.item) onSelect(mid.item);
+  }).current;
+
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current;
+
   return (
-    <View style={picker.wrap}>
-      {items.map((item) => (
-        <TouchableOpacity key={item} onPress={() => onSelect(item)} style={picker.row}>
-          <Text style={[picker.item, selected === item && picker.itemSelected]}>
-            {item}
-          </Text>
-        </TouchableOpacity>
-      ))}
+    <View style={{ height: PICKER_HEIGHT }}>
+      <FlatList
+        data={items}
+        keyExtractor={(item) => item}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={ITEM_HEIGHT}
+        decelerationRate="fast"
+        initialScrollIndex={initialIndex}
+        getItemLayout={(_, index) => ({ length: ITEM_HEIGHT, offset: ITEM_HEIGHT * 2 + ITEM_HEIGHT * index, index })}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
+        renderItem={({ item }) => (
+          <View style={picker.row}>
+            <Text style={[picker.item, item === selected && picker.itemSelected]}>{item}</Text>
+          </View>
+        )}
+      />
     </View>
   );
 }
 
 const picker = StyleSheet.create({
-  wrap: { alignItems: 'center' },
-  row: { paddingVertical: 8 },
-  item: { fontSize: 16, color: '#ccc' },
-  itemSelected: { fontSize: 20, color: '#000', fontWeight: '600' },
+  row: { height: ITEM_HEIGHT, justifyContent: 'center', alignItems: 'center' },
+  item: { fontSize: 15, color: '#ccc', textAlign: 'center' },
+  itemSelected: { fontSize: 17, color: '#000', fontWeight: '600' },
 });
 
 const styles = StyleSheet.create({
@@ -137,12 +162,20 @@ const styles = StyleSheet.create({
   pickersRow: { flex: 1, flexDirection: 'row', justifyContent: 'space-around' },
   pickerCol: { alignItems: 'center', flex: 1 },
   pickerHeader: { fontSize: 13, color: '#000', fontWeight: '600', marginBottom: 12 },
+  selectionOverlay: {
+    position: 'absolute',
+    left: 0, right: 0,
+    top: '50%',
+    marginTop: ITEM_HEIGHT / 2,
+    height: ITEM_HEIGHT,
+    backgroundColor: '#F2F2F2',
+    borderRadius: 10,
+  },
   cta: {
     backgroundColor: '#000',
     borderRadius: 32,
     paddingVertical: 18,
     alignItems: 'center',
-    marginBottom: 12,
   },
   ctaText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

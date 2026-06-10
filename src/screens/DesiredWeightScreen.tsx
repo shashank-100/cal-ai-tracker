@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line, Rect } from 'react-native-svg';
 
 interface Props {
@@ -12,13 +13,14 @@ const MAX = 250;
 
 export default function DesiredWeightScreen({ onContinue, onBack }: Props) {
   const [weight, setWeight] = useState(165);
+  const insets = useSafeAreaInsets();
 
   const ticks = Array.from({ length: 31 }, (_, i) => MIN + i * 5);
 
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>
             <Text style={styles.backArrow}>←</Text>
@@ -95,7 +97,7 @@ const styles = StyleSheet.create({
   nudgeText: { fontSize: 24, fontWeight: '300' },
   cta: {
     backgroundColor: '#000', borderRadius: 32, paddingVertical: 18,
-    alignItems: 'center', marginBottom: 12,
+    alignItems: 'center',
   },
   ctaText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

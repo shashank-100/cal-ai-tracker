@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
   StatusBar, Alert, ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import {
   GoogleSignin,
@@ -43,6 +44,7 @@ function AppleLogo() {
 
 export default function CreateAccountScreen({ onApple, onGoogle, onSkip, onBack }: Props) {
   const [loading, setLoading] = useState<'apple' | 'google' | null>(null);
+  const insets = useSafeAreaInsets();
 
   const handleGoogle = async () => {
     setLoading('google');
@@ -80,7 +82,7 @@ export default function CreateAccountScreen({ onApple, onGoogle, onSkip, onBack 
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>
             <Text style={styles.backArrow}>←</Text>
