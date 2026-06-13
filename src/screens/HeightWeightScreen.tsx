@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0, right: 0,
     top: '50%',
-    marginTop: ITEM_HEIGHT / 2,
+    marginTop: -ITEM_HEIGHT / 2,
     height: ITEM_HEIGHT,
     backgroundColor: '#F2F2F2',
     borderRadius: 10,
