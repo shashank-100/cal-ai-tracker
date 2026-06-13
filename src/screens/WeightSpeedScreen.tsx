@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, LayoutChangeEvent } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SPEEDS = [
   { value: 0.2, emoji: '🦥' },
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function WeightSpeedScreen({ onContinue, onBack }: Props) {
+  const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState(1.0);
   const [trackWidth, setTrackWidth] = useState(0);
 
@@ -23,7 +25,7 @@ export default function WeightSpeedScreen({ onContinue, onBack }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>
             <Text style={styles.backArrow}>←</Text>

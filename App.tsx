@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BackHandler, View, ActivityIndicator } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { useAuthStore } from './src/stores/authStore';
 import WelcomeScreen from './src/screens/WelcomeScreen';
@@ -121,7 +122,7 @@ export default function App() {
     next();
   };
 
-  return <ErrorBoundary>{renderScreen()}</ErrorBoundary>;
+  return <SafeAreaProvider><ErrorBoundary>{renderScreen()}</ErrorBoundary></SafeAreaProvider>;
 
   function renderScreen() { switch (screen) {
     case 'welcome':

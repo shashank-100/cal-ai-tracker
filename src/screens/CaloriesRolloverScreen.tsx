@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   question: 'burned' | 'rollover';
@@ -8,12 +9,13 @@ interface Props {
 }
 
 export default function CaloriesRolloverScreen({ question, onYes, onNo, onBack }: Props) {
+  const insets = useSafeAreaInsets();
   const isBurned = question === 'burned';
 
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>
             <Text style={styles.backArrow}>←</Text>
