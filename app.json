@@ -2,7 +2,7 @@
   "expo": {
     "name": "Cal AI Tracker",
     "slug": "cal-ai-tracker",
-    "version": "1.3.6",
+    "version": "1.3.7",
     "scheme": "calai",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,7 +21,7 @@
     },
     "android": {
       "package": "com.shashank.calaitracker",
-      "versionCode": 10,
+      "versionCode": 11,
       "adaptiveIcon": {
         "backgroundColor": "#ffffff",
         "foregroundImage": "./assets/android-icon-foreground.png",
