@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
-  StatusBar, Switch, FlatList, ViewToken,
+  StatusBar, Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ScrollPicker from '../components/ScrollPicker';
 
 interface Props {
   onContinue: (data: { height: string; weight: string; metric: boolean }) => void;
@@ -17,8 +18,6 @@ const HEIGHTS_METRIC = Array.from({ length: 100 }, (_, i) => `${i + 100} cm`);
 const WEIGHTS_METRIC = Array.from({ length: 200 }, (_, i) => `${i + 30} kg`);
 
 const ITEM_HEIGHT = 44;
-const VISIBLE_ITEMS = 5;
-const PICKER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
 
 export default function HeightWeightScreen({ onContinue, onBack }: Props) {
   const [metric, setMetric] = useState(false);
@@ -62,26 +61,26 @@ export default function HeightWeightScreen({ onContinue, onBack }: Props) {
             <>
               <View style={styles.pickerCol}>
                 <Text style={styles.pickerHeader}>Height</Text>
-                <ScrollPicker items={HEIGHTS_METRIC} selected={heightCm} onSelect={setHeightCm} />
+                <ScrollPicker items={HEIGHTS_METRIC} selected={heightCm} onSelect={setHeightCm} itemHeight={ITEM_HEIGHT} />
               </View>
               <View style={styles.pickerCol}>
                 <Text style={styles.pickerHeader}>Weight</Text>
-                <ScrollPicker items={WEIGHTS_METRIC} selected={weightKg} onSelect={setWeightKg} />
+                <ScrollPicker items={WEIGHTS_METRIC} selected={weightKg} onSelect={setWeightKg} itemHeight={ITEM_HEIGHT} />
               </View>
             </>
           ) : (
             <>
               <View style={styles.pickerCol}>
                 <Text style={styles.pickerHeader}>Height</Text>
-                <ScrollPicker items={HEIGHTS_IMPERIAL} selected={height} onSelect={setHeight} />
+                <ScrollPicker items={HEIGHTS_IMPERIAL} selected={height} onSelect={setHeight} itemHeight={ITEM_HEIGHT} />
               </View>
               <View style={styles.pickerCol}>
                 <Text style={styles.pickerHeader}> </Text>
-                <ScrollPicker items={INCHES} selected={inch} onSelect={setInch} />
+                <ScrollPicker items={INCHES} selected={inch} onSelect={setInch} itemHeight={ITEM_HEIGHT} />
               </View>
               <View style={styles.pickerCol}>
                 <Text style={styles.pickerHeader}>Weight</Text>
-                <ScrollPicker items={WEIGHTS_IMPERIAL} selected={weight} onSelect={setWeight} />
+                <ScrollPicker items={WEIGHTS_IMPERIAL} selected={weight} onSelect={setWeight} itemHeight={ITEM_HEIGHT} />
               </View>
             </>
           )}
@@ -103,48 +102,6 @@ export default function HeightWeightScreen({ onContinue, onBack }: Props) {
   );
 }
 
-function ScrollPicker({ items, selected, onSelect }: {
-  items: string[];
-  selected: string;
-  onSelect: (v: string) => void;
-}) {
-  const initialIndex = items.indexOf(selected);
-
-  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    const mid = viewableItems[Math.floor(viewableItems.length / 2)];
-    if (mid?.item) onSelect(mid.item);
-  }).current;
-
-  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current;
-
-  return (
-    <View style={{ height: PICKER_HEIGHT }}>
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item}
-        showsVerticalScrollIndicator={false}
-        snapToInterval={ITEM_HEIGHT}
-        decelerationRate="fast"
-        initialScrollIndex={initialIndex}
-        getItemLayout={(_, index) => ({ length: ITEM_HEIGHT, offset: ITEM_HEIGHT * 2 + ITEM_HEIGHT * index, index })}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
-        renderItem={({ item }) => (
-          <View style={picker.row}>
-            <Text style={[picker.item, item === selected && picker.itemSelected]}>{item}</Text>
-          </View>
-        )}
-      />
-    </View>
-  );
-}
-
-const picker = StyleSheet.create({
-  row: { height: ITEM_HEIGHT, justifyContent: 'center', alignItems: 'center' },
-  item: { fontSize: 15, color: '#ccc', textAlign: 'center' },
-  itemSelected: { fontSize: 17, color: '#000', fontWeight: '600' },
-});
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },

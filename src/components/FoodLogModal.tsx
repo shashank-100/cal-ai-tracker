@@ -214,7 +214,7 @@ export default function FoodLogModal({ visible, onClose, onLogged }: Props) {
               <Text style={styles.servingNum}>{servingQty}</Text>
               <TouchableOpacity
                 style={styles.servingBtn}
-                onPress={() => setServingQty((s) => s + 0.5)}
+                onPress={() => setServingQty((s) => Math.min(100, s + 0.5))}
                 disabled={step === 'saving'}
               >
                 <Text style={styles.servingBtnText}>+</Text>

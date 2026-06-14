@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, FlatList, ViewToken } from 'react-native';
+import { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ScrollPicker from '../components/ScrollPicker';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
@@ -8,8 +9,6 @@ const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1));
 const YEARS = Array.from({ length: 100 }, (_, i) => String(2006 - i));
 
 const ITEM_HEIGHT = 48;
-const VISIBLE_ITEMS = 5;
-const PICKER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
 
 interface Props {
   onContinue: (dob: string) => void;
@@ -40,9 +39,9 @@ export default function BirthdayScreen({ onContinue, onBack }: Props) {
 
         <View style={styles.pickersRow}>
           <View style={styles.selectionOverlay} pointerEvents="none" />
-          <ScrollPicker items={MONTHS} selected={month} onSelect={setMonth} flex={2} />
-          <ScrollPicker items={DAYS} selected={day} onSelect={setDay} flex={1} />
-          <ScrollPicker items={YEARS} selected={year} onSelect={setYear} flex={1.5} />
+          <ScrollPicker items={MONTHS} selected={month} onSelect={setMonth} itemHeight={ITEM_HEIGHT} flex={2} />
+          <ScrollPicker items={DAYS} selected={day} onSelect={setDay} itemHeight={ITEM_HEIGHT} flex={1} />
+          <ScrollPicker items={YEARS} selected={year} onSelect={setYear} itemHeight={ITEM_HEIGHT} flex={1.5} />
         </View>
 
         <TouchableOpacity
@@ -63,49 +62,6 @@ export default function BirthdayScreen({ onContinue, onBack }: Props) {
   );
 }
 
-function ScrollPicker({ items, selected, onSelect, flex }: {
-  items: string[]; selected: string; onSelect: (v: string) => void; flex: number;
-}) {
-  const initialIndex = items.indexOf(selected);
-
-  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    const mid = viewableItems[Math.floor(viewableItems.length / 2)];
-    if (mid?.item) onSelect(mid.item);
-  }).current;
-
-  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current;
-
-  return (
-    <View style={{ flex, height: PICKER_HEIGHT }}>
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item}
-        showsVerticalScrollIndicator={false}
-        snapToInterval={ITEM_HEIGHT}
-        decelerationRate="fast"
-        initialScrollIndex={initialIndex}
-        getItemLayout={(_, index) => ({ length: ITEM_HEIGHT, offset: ITEM_HEIGHT * 2 + ITEM_HEIGHT * index, index })}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
-        renderItem={({ item }) => {
-          const isSelected = item === selected;
-          return (
-            <View style={picker.row}>
-              <Text style={[picker.item, isSelected && picker.itemSelected]}>{item}</Text>
-            </View>
-          );
-        }}
-      />
-    </View>
-  );
-}
-
-const picker = StyleSheet.create({
-  row: { height: ITEM_HEIGHT, justifyContent: 'center', alignItems: 'center' },
-  item: { fontSize: 15, color: '#ccc', textAlign: 'center' },
-  itemSelected: { fontSize: 17, color: '#000', fontWeight: '600' },
-});
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },

@@ -83,7 +83,7 @@ export default function App() {
   useEffect(() => {
     if (!authLoading && session) {
       const postAuthScreens: Screen[] = ['home', 'progress', 'settings'];
-      const onboardingComplete = postAuthScreens.includes(screen) || FLOW.indexOf(screen) >= FLOW.indexOf('loading');
+      const onboardingComplete = postAuthScreens.includes(screen) || FLOW.indexOf(screen) > FLOW.indexOf('createAccount');
       if (!onboardingComplete) setScreen('home');
     }
   }, [authLoading, session]);

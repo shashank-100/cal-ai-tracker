@@ -84,7 +84,7 @@ class _UsageStore:
                 total_output = self._fallback_output
                 calls = self._fallback_calls
             input_cost = total_input / 1_000_000 * 15.0
-            output_cost = total_output / 1_000_000 * 75.0
+            output_cost = total_output / 1_000_000 * 60.0
             return {
                 "total_calls": calls,
                 "total_input_tokens": total_input,
