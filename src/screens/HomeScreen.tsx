@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { useAuthStore } from '../stores/authStore';
 import { api } from '../lib/api';
@@ -32,6 +33,7 @@ interface Props {
 
 export default function HomeScreen({ onNavigate }: Props) {
   const { token } = useAuthStore();
+  const insets = useSafeAreaInsets();
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [streak, setStreak] = useState<Streak | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -204,7 +206,7 @@ export default function HomeScreen({ onNavigate }: Props) {
           <View style={{ height: 20 }} />
         </ScrollView>
 
-        <View style={styles.tabBar}>
+        <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
           <TouchableOpacity style={styles.tabItem}>
             <Text style={styles.tabIcon}>⊞</Text>
             <Text style={[styles.tabLabel, styles.tabLabelActive]}>Home</Text>
