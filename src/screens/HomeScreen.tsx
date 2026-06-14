@@ -36,8 +36,15 @@ export default function HomeScreen({ onNavigate }: Props) {
   const [streak, setStreak] = useState<Streak | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const todayStr = todayISO();
+  const [todayStr, setTodayStr] = useState(todayISO);
   const DAYS = useMemo(() => weekDays(), [todayStr]);
+
+  useEffect(() => {
+    const now = new Date();
+    const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
+    const t = setTimeout(() => setTodayStr(todayISO()), msUntilMidnight);
+    return () => clearTimeout(t);
+  }, [todayStr]);
 
   const load = useCallback(async () => {
     if (!token) return;

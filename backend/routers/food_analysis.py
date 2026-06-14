@@ -33,8 +33,18 @@ async def analyze_food(
     if len(image_bytes) > 5 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Image must be under 5 MB")
 
-    # Upload to Supabase Storage
-    file_name = f"{user['id']}/{uuid.uuid4()}.jpg"
+    # Run analysis before uploading — avoid orphaned files on failure
+    try:
+        analysis = await analyze_food_image(image_bytes, media_type=image.content_type or "image/jpeg")
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Could not identify food in the image. Please try a clearer photo.")
+    except Exception:
+        raise HTTPException(status_code=502, detail="Food analysis unavailable. Please try again.")
+
+    # Derive extension from actual content-type
+    ext_map = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+    ext = ext_map.get(image.content_type or "", "jpg")
+    file_name = f"{user['id']}/{uuid.uuid4()}.{ext}"
     try:
         admin_supabase.storage.from_("food-photos").upload(
             file_name,
@@ -45,13 +55,6 @@ async def analyze_food(
         raise HTTPException(status_code=500, detail="Failed to upload image")
 
     photo_url = admin_supabase.storage.from_("food-photos").get_public_url(file_name)
-
-    try:
-        analysis = await analyze_food_image(image_bytes, media_type=image.content_type or "image/jpeg")
-    except ValueError:
-        raise HTTPException(status_code=422, detail="Could not identify food in the image. Please try a clearer photo.")
-    except Exception:
-        raise HTTPException(status_code=502, detail="Food analysis unavailable. Please try again.")
 
     return {
         **analysis,

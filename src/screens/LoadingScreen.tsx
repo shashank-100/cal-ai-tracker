@@ -94,8 +94,7 @@ export default function LoadingScreen({ onboardingData, onComplete }: Props) {
     const heightCm = parseHeightToCm(onboardingData.height ?? '5 ft 9 in', isMetric);
     const weightKg = parseWeightToKg(onboardingData.weight ?? '155 lb', isMetric);
     const desiredWeightKg = Math.round(
-      (onboardingData.desiredWeightLbs ?? (isMetric ? weightKg : 145)) *
-      (isMetric ? 1 : 0.453592)
+      (onboardingData.desiredWeightLbs ?? 145) * 0.453592
     );
     const weightSpeedKgWeek = Math.round(
       (onboardingData.weightSpeedLbs ?? 1) * 0.453592 * 10

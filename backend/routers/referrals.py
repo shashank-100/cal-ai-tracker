@@ -1,3 +1,5 @@
+import secrets
+import string
 import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -36,7 +38,7 @@ async def generate_referral_code(user: dict = Depends(get_current_user)):
     if existing.data:
         return {"referral_code": existing.data[0]["referral_code"]}
 
-    code = str(uuid.uuid4())[:8].upper()
+    code = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
     res = admin_supabase.table("referrals").insert({
         "referrer_id": user["id"],
         "referral_code": code,

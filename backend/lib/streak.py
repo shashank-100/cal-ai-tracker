@@ -17,8 +17,8 @@ def update_streak(user_id: str, log_date: date) -> dict:
         diff = (log_date - last_date).days
         if diff == 1:
             current += 1
-        elif diff == 0:
-            pass  # same day, no change
+        elif diff == 0 or diff < 0:
+            pass  # same day or backdated entry — no change
         else:
             current = 1
 

@@ -3,11 +3,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   targetLbs?: number;
+  goal?: string;
   onContinue: () => void;
   onBack: () => void;
 }
 
-export default function RealisticTargetScreen({ targetLbs = 10, onContinue, onBack }: Props) {
+export default function RealisticTargetScreen({ targetLbs = 10, goal, onContinue, onBack }: Props) {
+  const verb = goal?.toLowerCase().includes('lose') ? 'Losing' : goal?.toLowerCase().includes('gain') ? 'Gaining' : 'Changing';
   const insets = useSafeAreaInsets();
   return (
     <SafeAreaView style={styles.safe}>
@@ -24,7 +26,7 @@ export default function RealisticTargetScreen({ targetLbs = 10, onContinue, onBa
 
         <View style={styles.content}>
           <Text style={styles.title}>
-            Gaining{' '}
+            {verb}{' '}
             <Text style={styles.highlight}>{targetLbs} lbs</Text>
             {' '}is a{'\n'}realistic target. It's{'\n'}not hard at all!
           </Text>

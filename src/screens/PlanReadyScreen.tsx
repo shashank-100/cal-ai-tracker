@@ -7,6 +7,7 @@ interface Props {
   onBack: () => void;
   goal?: string;
   desiredWeightLbs?: number;
+  currentWeight?: string;
   birthday?: string;
 }
 
@@ -27,11 +28,11 @@ function calcTargetDate(weightLbs: number, goal: string, speedLbs = 1.0): string
   return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
 }
 
-export default function PlanReadyScreen({ onGetStarted, onBack, goal = 'Gain weight', desiredWeightLbs = 10, birthday }: Props) {
+export default function PlanReadyScreen({ onGetStarted, onBack, goal = 'Gain weight', desiredWeightLbs = 10, currentWeight: currentWeightStr, birthday }: Props) {
   const insets = useSafeAreaInsets();
-  const currentWeight = 155; // default until we collect current weight
-  const targetDiff = Math.abs(desiredWeightLbs - currentWeight);
-  const macros = calcMacros(goal, currentWeight);
+  const currentWeightLbs = parseFloat(currentWeightStr ?? '') || 155;
+  const targetDiff = Math.abs(desiredWeightLbs - currentWeightLbs);
+  const macros = calcMacros(goal, currentWeightLbs);
   const targetDate = calcTargetDate(targetDiff, goal);
   const goalVerb = goal === 'Gain weight' ? 'gain' : goal === 'Lose weight' ? 'lose' : 'maintain';
 

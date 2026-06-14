@@ -47,10 +47,13 @@ export default function BirthdayScreen({ onContinue, onBack }: Props) {
         <TouchableOpacity
           style={styles.cta}
           onPress={() => {
-            const d = new Date(`${month} ${day}, ${year}`);
             const monthIdx = MONTHS.indexOf(month);
-            if (isNaN(d.getTime()) || d.getMonth() !== monthIdx) return;
-            const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const dayNum = parseInt(day, 10);
+            const yearNum = parseInt(year, 10);
+            // Validate by constructing with numeric args (no locale-dependent string parsing)
+            const d = new Date(yearNum, monthIdx, dayNum);
+            if (d.getMonth() !== monthIdx || d.getDate() !== dayNum) return;
+            const iso = `${yearNum}-${String(monthIdx + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
             onContinue(iso);
           }}
           activeOpacity={0.85}

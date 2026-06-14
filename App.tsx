@@ -86,7 +86,7 @@ export default function App() {
       const onboardingComplete = postAuthScreens.includes(screen) || FLOW.indexOf(screen) > FLOW.indexOf('createAccount');
       if (!onboardingComplete) setScreen('home');
     }
-  }, [authLoading, session]);
+  }, [authLoading, session, screen]);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -158,7 +158,7 @@ export default function App() {
     case 'desiredWeight':
       return <DesiredWeightScreen onContinue={(desiredWeightLbs) => save({ desiredWeightLbs })} onBack={back} />;
     case 'realisticTarget':
-      return <RealisticTargetScreen targetLbs={data.desiredWeightLbs} onContinue={next} onBack={back} />;
+      return <RealisticTargetScreen targetLbs={data.desiredWeightLbs} goal={data.goal} onContinue={next} onBack={back} />;
     case 'trust':
       return <TrustScreen onContinue={next} onBack={back} />;
     case 'appleHealth':
@@ -185,6 +185,7 @@ export default function App() {
         onBack={back}
         goal={data.goal}
         desiredWeightLbs={data.desiredWeightLbs}
+        currentWeight={data.weight}
         birthday={data.birthday}
       />;
     case 'createAccount':

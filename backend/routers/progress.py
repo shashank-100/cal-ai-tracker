@@ -57,7 +57,7 @@ async def weekly_progress(
         d = (week_start + timedelta(days=i)).isoformat()
         entry = days.get(d, {"date": d, "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0})
         entry["goal_calories"] = goal
-        entry["on_target"] = entry["calories"] <= goal * 1.05
+        entry["on_target"] = entry["calories"] > 0 and entry["calories"] <= goal * 1.05
         daily.append(entry)
 
     logged_days = sum(1 for d in daily if d["calories"] > 0)
