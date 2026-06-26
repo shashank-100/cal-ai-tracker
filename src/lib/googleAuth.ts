@@ -4,7 +4,9 @@ import { supabase } from './supabase';
 const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
 
 export type GoogleSignInResult =
-  | { ok: true }
+  // `pending` = sign-in is mid-flight (web redirect kicked off); the session
+  // arrives via onAuthStateChange after the browser returns, not from here.
+  | { ok: true; pending?: boolean }
   | { ok: false; cancelled?: boolean; message: string };
 
 /**
@@ -56,9 +58,11 @@ async function signInWeb(): Promise<GoogleSignInResult> {
     provider: 'google',
     options: { redirectTo },
   });
-  // On success the browser redirects away, so we only reach here on error.
   if (error) return { ok: false, message: error.message };
-  return { ok: true };
+  // Reaching here means the redirect was initiated, NOT that we have a session.
+  // The browser navigates to Google and back; the session lands via
+  // onAuthStateChange. Flag as pending so callers don't show a false success.
+  return { ok: true, pending: true };
 }
 
 export function signInWithGoogle(): Promise<GoogleSignInResult> {

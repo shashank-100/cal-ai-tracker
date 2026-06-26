@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, StatusBar, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../stores/authStore';
 import { api } from '../lib/api';
+import FloatingTabBar, { makeTabHandler, profileInitials, type NavTarget } from '../components/FloatingTabBar';
 
 interface DayProgress {
   date: string;
@@ -47,10 +49,17 @@ function dayLabel(dateStr: string): string {
 
 interface Props {
   onBack: () => void;
+  onNavigate?: (target: NavTarget) => void;
 }
 
-export default function ProgressScreen({ onBack }: Props) {
-  const { token } = useAuthStore();
+export default function ProgressScreen({ onBack, onNavigate }: Props) {
+  const { token, user } = useAuthStore();
+  const insets = useSafeAreaInsets();
+  const initials = profileInitials(
+    (user?.user_metadata as any)?.full_name ?? (user?.user_metadata as any)?.name,
+    user?.email
+  );
+  const tabBarClearance = 76 + Math.max(insets.bottom, 10);
   const [weekly, setWeekly] = useState<WeeklyData | null>(null);
   const [monthly, setMonthly] = useState<MonthlyData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -179,9 +188,19 @@ export default function ProgressScreen({ onBack }: Props) {
             </View>
           </View>
 
-          <View style={{ height: 32 }} />
+          <View style={{ height: tabBarClearance }} />
         </ScrollView>
       )}
+
+      <FloatingTabBar
+        active="progress"
+        initials={initials}
+        onSelect={makeTabHandler((target) => {
+          if (target === 'home') onBack();
+          else onNavigate?.(target);
+        })}
+        onAdd={() => onNavigate?.('home')}
+      />
     </SafeAreaView>
   );
 }

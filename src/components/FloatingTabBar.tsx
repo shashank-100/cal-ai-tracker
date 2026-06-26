@@ -1,8 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 
 export type TabKey = 'home' | 'progress' | 'groups' | 'profile';
+
+/** App screen names the tab bar can navigate to. */
+export type NavTarget = 'home' | 'progress' | 'settings';
 
 interface Props {
   active: TabKey;
@@ -10,6 +13,28 @@ interface Props {
   onAdd: () => void;
   /** Initials shown in the Profile avatar, e.g. "ST". */
   initials?: string;
+}
+
+/** Up-to-2-letter initials for the Profile avatar, from name or email. */
+export function profileInitials(name?: string | null, email?: string | null): string {
+  const source = (name ?? '').trim() || (email ?? '').split('@')[0] || '';
+  if (!source) return 'ME';
+  const parts = source.split(/[\s._-]+/).filter(Boolean);
+  const letters = parts.length >= 2 ? parts[0][0] + parts[1][0] : source.slice(0, 2);
+  return letters.toUpperCase();
+}
+
+/**
+ * Shared tab→screen mapping so every screen routes tabs identically.
+ * `groups` has no screen yet, so it shows a placeholder instead of navigating.
+ */
+export function makeTabHandler(navigate: (target: NavTarget) => void) {
+  return (tab: TabKey) => {
+    if (tab === 'home') navigate('home');
+    else if (tab === 'progress') navigate('progress');
+    else if (tab === 'profile') navigate('settings');
+    else Alert.alert('Coming soon', 'Groups will be available in a future update.');
+  };
 }
 
 function HomeIcon({ color }: { color: string }) {

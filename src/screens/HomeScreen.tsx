@@ -1,21 +1,12 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { useAuthStore } from '../stores/authStore';
 import { api } from '../lib/api';
 import type { DailySummary, Streak } from '../lib/types';
 import FoodLogModal from '../components/FoodLogModal';
-import FloatingTabBar from '../components/FloatingTabBar';
-
-// Derive up-to-2-letter initials for the Profile avatar from name or email.
-function getInitials(name?: string | null, email?: string | null): string {
-  const source = (name ?? '').trim() || (email ?? '').split('@')[0] || '';
-  if (!source) return 'ME';
-  const parts = source.split(/[\s._-]+/).filter(Boolean);
-  const letters = parts.length >= 2 ? parts[0][0] + parts[1][0] : source.slice(0, 2);
-  return letters.toUpperCase();
-}
+import FloatingTabBar, { makeTabHandler, profileInitials } from '../components/FloatingTabBar';
 
 const MACRO_RING_CIRC = 2 * Math.PI * 20; // macro ring radius = 20
 
@@ -49,7 +40,7 @@ export default function HomeScreen({ onNavigate }: Props) {
   // Floating bar = pill/FAB (~76) + bottom inset; pad the scroll so the last
   // row clears it on every device instead of using a fixed magic number.
   const tabBarClearance = 76 + Math.max(insets.bottom, 10);
-  const initials = getInitials(
+  const initials = profileInitials(
     (user?.user_metadata as any)?.full_name ?? (user?.user_metadata as any)?.name,
     user?.email
   );
@@ -241,11 +232,9 @@ export default function HomeScreen({ onNavigate }: Props) {
         <FloatingTabBar
           active="home"
           initials={initials}
-          onSelect={(tab) => {
-            if (tab === 'progress') onNavigate?.('progress');
-            else if (tab === 'profile') onNavigate?.('settings');
-            else if (tab === 'groups') Alert.alert('Coming soon', 'Groups will be available in a future update.');
-          }}
+          onSelect={makeTabHandler((target) => {
+            if (target !== 'home') onNavigate?.(target);
+          })}
           onAdd={() => setModalVisible(true)}
         />
       </View>

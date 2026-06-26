@@ -195,8 +195,8 @@ export default function App() {
     case 'home':
       return <HomeScreen onNavigate={(s: 'progress' | 'settings') => setScreen(s)} />;
     case 'progress':
-      return <ProgressScreen onBack={() => setScreen('home')} />;
+      return <ProgressScreen onBack={() => setScreen('home')} onNavigate={(s) => setScreen(s)} />;
     case 'settings':
-      return <SettingsScreen onBack={() => setScreen('home')} />;
+      return <SettingsScreen onBack={() => setScreen('home')} onNavigate={(s) => setScreen(s)} />;
   } }
 }

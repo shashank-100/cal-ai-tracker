@@ -1,11 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, StatusBar, ScrollView, TouchableOpacity, Switch, ActivityIndicator, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../stores/authStore';
 import { api } from '../lib/api';
 import type { Profile, Plan } from '../lib/types';
+import FloatingTabBar, { makeTabHandler, profileInitials, type NavTarget } from '../components/FloatingTabBar';
 
 interface Props {
   onBack: () => void;
+  onNavigate?: (target: NavTarget) => void;
 }
 
 const GOAL_LABELS: Record<string, string> = {
@@ -14,8 +17,14 @@ const GOAL_LABELS: Record<string, string> = {
   gain: 'Gain weight',
 };
 
-export default function SettingsScreen({ onBack }: Props) {
-  const { token, signOut } = useAuthStore();
+export default function SettingsScreen({ onBack, onNavigate }: Props) {
+  const { token, user, signOut } = useAuthStore();
+  const insets = useSafeAreaInsets();
+  const initials = profileInitials(
+    (user?.user_metadata as any)?.full_name ?? (user?.user_metadata as any)?.name,
+    user?.email
+  );
+  const tabBarClearance = 76 + Math.max(insets.bottom, 10);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [plan, setPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(true);
@@ -152,9 +161,19 @@ export default function SettingsScreen({ onBack }: Props) {
             </TouchableOpacity>
           </View>
 
-          <View style={{ height: 32 }} />
+          <View style={{ height: tabBarClearance }} />
         </ScrollView>
       )}
+
+      <FloatingTabBar
+        active="profile"
+        initials={initials}
+        onSelect={makeTabHandler((target) => {
+          if (target === 'home') onBack();
+          else onNavigate?.(target);
+        })}
+        onAdd={() => onNavigate?.('home')}
+      />
     </SafeAreaView>
   );
 }
