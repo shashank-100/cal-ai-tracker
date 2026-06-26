@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, ScrollView, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { useAuthStore } from '../stores/authStore';
 import { api } from '../lib/api';
@@ -44,6 +45,10 @@ interface Props {
 
 export default function HomeScreen({ onNavigate }: Props) {
   const { token, user } = useAuthStore();
+  const insets = useSafeAreaInsets();
+  // Floating bar = pill/FAB (~76) + bottom inset; pad the scroll so the last
+  // row clears it on every device instead of using a fixed magic number.
+  const tabBarClearance = 76 + Math.max(insets.bottom, 10);
   const initials = getInitials(
     (user?.user_metadata as any)?.full_name ?? (user?.user_metadata as any)?.name,
     user?.email
@@ -229,8 +234,8 @@ export default function HomeScreen({ onNavigate }: Props) {
               </View>
             ))
           )}
-          {/* Spacer so content clears the floating tab bar. */}
-          <View style={{ height: 110 }} />
+          {/* Spacer so content clears the floating tab bar (derived from insets). */}
+          <View style={{ height: tabBarClearance }} />
         </ScrollView>
 
         <FloatingTabBar
@@ -324,21 +329,6 @@ const styles = StyleSheet.create({
   logName: { fontSize: 14, fontWeight: '600', color: '#000' },
   logMeta: { fontSize: 12, color: '#888', marginTop: 2 },
   logCal: { fontSize: 14, fontWeight: '700', color: '#000' },
-  tabBar: {
-    flexDirection: 'row', backgroundColor: '#fff', paddingVertical: 12,
-    paddingHorizontal: 24, borderTopWidth: 1, borderTopColor: '#eee',
-    alignItems: 'center',
-  },
-  tabItem: { flex: 1, alignItems: 'center', gap: 2 },
-  tabIcon: { fontSize: 20 },
-  tabLabel: { fontSize: 11, color: '#888' },
-  tabLabelActive: { color: '#000', fontWeight: '600' },
-  fab: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: '#000', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, elevation: 6,
-  },
-  fabText: { fontSize: 28, color: '#fff', lineHeight: 32 },
   errorContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
   errorText: { fontSize: 16, color: '#444' },
   retryButton: { paddingHorizontal: 24, paddingVertical: 10, backgroundColor: '#000', borderRadius: 20 },
