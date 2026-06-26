@@ -2,16 +2,11 @@
   "expo": {
     "name": "Cal AI Tracker",
     "slug": "cal-ai-tracker",
-    "version": "1.3.7",
+    "version": "1.3.8",
     "scheme": "calai",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.shashank.calaitracker",
@@ -21,14 +16,13 @@
     },
     "android": {
       "package": "com.shashank.calaitracker",
-      "versionCode": 11,
+      "versionCode": 12,
       "adaptiveIcon": {
         "backgroundColor": "#ffffff",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "resizableActivity": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.CAMERA",
@@ -48,14 +42,21 @@
       "expo-secure-store",
       "@react-native-google-signin/google-signin",
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "Allow Cal AI to access your photos to log meals.",
           "cameraPermission": "Allow Cal AI to use the camera to photograph your food."
         }
       ],
-      "expo-web-browser",
-      "expo-status-bar"
+      "expo-web-browser"
     ],
     "owner": "shanky111"
   }

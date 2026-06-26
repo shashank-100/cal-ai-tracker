@@ -2,13 +2,18 @@ import { Component, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface Props { children: ReactNode }
-interface State { hasError: boolean; error?: string }
+interface State { hasError: boolean }
 
 export default class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error: error.message };
+  static getDerivedStateFromError(): State {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    // Log the real error for debugging; never surface internals to the user.
+    console.error('ErrorBoundary caught:', error);
   }
 
   reset = () => this.setState({ hasError: false });
@@ -19,7 +24,9 @@ export default class ErrorBoundary extends Component<Props, State> {
         <View style={styles.container}>
           <Text style={styles.emoji}>😕</Text>
           <Text style={styles.title}>Something went wrong</Text>
-          <Text style={styles.body}>{this.state.error}</Text>
+          <Text style={styles.body}>
+            An unexpected error occurred. Please try again.
+          </Text>
           <TouchableOpacity style={styles.btn} onPress={this.reset}>
             <Text style={styles.btnText}>Try Again</Text>
           </TouchableOpacity>

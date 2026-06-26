@@ -34,8 +34,16 @@ interface MonthlyData {
   avg_calories: number;
 }
 
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// Label a bar from its own date (YYYY-MM-DD), parsed as local time, so labels
+// always match the data regardless of which weekday the API's week starts on.
+function dayLabel(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  if (!y || !m || !d) return '';
+  return WEEKDAY_LABELS[new Date(y, m - 1, d).getDay()];
+}
 
 interface Props {
   onBack: () => void;
@@ -104,7 +112,7 @@ export default function ProgressScreen({ onBack }: Props) {
               {weekly?.days_logged ?? 0} days logged · avg {Math.round(weekly?.avg_calories ?? 0)} kcal
             </Text>
             <View style={styles.barChart}>
-              {(weekly?.daily ?? []).map((d, i) => {
+              {(weekly?.daily ?? []).map((d) => {
                 const height = Math.max((d.calories / maxCalories) * 120, d.calories > 0 ? 4 : 0);
                 const goalLine = (weekly!.goal_calories / maxCalories) * 120;
                 return (
@@ -117,7 +125,7 @@ export default function ProgressScreen({ onBack }: Props) {
                         d.calories > 0 && (d.on_target ? styles.barGood : styles.barOver),
                       ]} />
                     </View>
-                    <Text style={styles.barLabel}>{DAY_LABELS[i]}</Text>
+                    <Text style={styles.barLabel}>{dayLabel(d.date)}</Text>
                   </View>
                 );
               })}

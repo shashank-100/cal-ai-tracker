@@ -60,7 +60,7 @@ export default function WeightSpeedScreen({ onContinue, onBack }: Props) {
                 key={s.value}
                 style={[
                   styles.dot,
-                  { left: (i / (SPEEDS.length - 1)) * trackWidth - 9 },
+                  { left: (i / (SPEEDS.length - 1)) * trackWidth },
                   selected === s.value && styles.dotActive,
                 ]}
                 onPress={() => setSelected(s.value)}

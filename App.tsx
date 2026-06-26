@@ -126,7 +126,7 @@ export default function App() {
 
   function renderScreen() { switch (screen) {
     case 'welcome':
-      return <WelcomeScreen onGetStarted={next} onSignIn={() => {}} />;
+      return <WelcomeScreen onGetStarted={next} />;
     case 'gender':
       return <GenderScreen onContinue={(gender) => save({ gender })} onBack={back} />;
     case 'workouts':

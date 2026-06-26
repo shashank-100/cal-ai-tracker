@@ -6,15 +6,16 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  Image,
 } from 'react-native';
 
 interface Props {
   onGetStarted: () => void;
-  onSignIn: () => void;
+  // Web sign-in for returning users — to be wired up later.
+  onSignIn?: () => void;
+  signingIn?: boolean;
 }
 
-export default function WelcomeScreen({ onGetStarted, onSignIn }: Props) {
+export default function WelcomeScreen({ onGetStarted }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -28,12 +29,18 @@ export default function WelcomeScreen({ onGetStarted, onSignIn }: Props) {
           <TouchableOpacity style={styles.cta} onPress={onGetStarted} activeOpacity={0.85}>
             <Text style={styles.ctaText}>Get Started</Text>
           </TouchableOpacity>
-          <Text style={styles.signInText}>
-            Purchased on the web?{' '}
-            <Text style={styles.signInLink} onPress={onSignIn}>
-              Sign In
+          {/* Web sign-in for returning users — to be set up later.
+          {signingIn ? (
+            <ActivityIndicator color="#000" style={styles.signInSpinner} />
+          ) : (
+            <Text style={styles.signInText}>
+              Purchased on the web?{' '}
+              <Text style={styles.signInLink} onPress={onSignIn}>
+                Sign In
+              </Text>
             </Text>
-          </Text>
+          )}
+          */}
         </View>
       </View>
     </SafeAreaView>
@@ -106,6 +113,7 @@ const styles = StyleSheet.create({
   ctaText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   signInText: { fontSize: 13, color: '#666' },
   signInLink: { fontWeight: '600', color: '#000', textDecorationLine: 'underline' },
+  signInSpinner: { height: 18 },
 });
 
 const mockup = StyleSheet.create({

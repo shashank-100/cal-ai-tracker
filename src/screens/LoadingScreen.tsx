@@ -48,14 +48,14 @@ function mapGoal(goal?: string): 'lose' | 'maintain' | 'gain' {
 
 function mapWorkouts(workouts?: string): number {
   if (!workouts) return 3;
-  const n = parseInt(workouts);
-  if (!isNaN(n)) return n;
-  if (workouts.includes('Never') || workouts.includes('0')) return 0;
-  if (workouts.includes('1')) return 1;
-  if (workouts.includes('2')) return 2;
-  if (workouts.includes('3') || workouts.includes('lightly')) return 3;
-  if (workouts.includes('4') || workouts.includes('5')) return 4;
-  return 5;
+  const w = workouts.toLowerCase();
+  // A leading number in the label is authoritative (e.g. "3-5 times" → 3).
+  const match = w.match(/\d+/);
+  if (match) return Math.min(parseInt(match[0], 10), 7);
+  if (w.includes('never')) return 0;
+  if (w.includes('rarely') || w.includes('lightly')) return 2;
+  if (w.includes('often') || w.includes('very')) return 5;
+  return 3;
 }
 
 export default function LoadingScreen({ onboardingData, onComplete }: Props) {

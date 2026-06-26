@@ -1,11 +1,22 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, ScrollView, Alert } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useAuthStore } from '../stores/authStore';
 import { api } from '../lib/api';
 import type { DailySummary, Streak } from '../lib/types';
 import FoodLogModal from '../components/FoodLogModal';
+import FloatingTabBar from '../components/FloatingTabBar';
+
+// Derive up-to-2-letter initials for the Profile avatar from name or email.
+function getInitials(name?: string | null, email?: string | null): string {
+  const source = (name ?? '').trim() || (email ?? '').split('@')[0] || '';
+  if (!source) return 'ME';
+  const parts = source.split(/[\s._-]+/).filter(Boolean);
+  const letters = parts.length >= 2 ? parts[0][0] + parts[1][0] : source.slice(0, 2);
+  return letters.toUpperCase();
+}
+
+const MACRO_RING_CIRC = 2 * Math.PI * 20; // macro ring radius = 20
 
 function todayISO(): string {
   const d = new Date();
@@ -32,8 +43,11 @@ interface Props {
 }
 
 export default function HomeScreen({ onNavigate }: Props) {
-  const { token } = useAuthStore();
-  const insets = useSafeAreaInsets();
+  const { token, user } = useAuthStore();
+  const initials = getInitials(
+    (user?.user_metadata as any)?.full_name ?? (user?.user_metadata as any)?.name,
+    user?.email
+  );
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [streak, setStreak] = useState<Streak | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -83,6 +97,10 @@ export default function HomeScreen({ onNavigate }: Props) {
   const circumference = 2 * Math.PI * 32;
   const offset = circumference * (1 - ringProgress);
 
+  // ratio = consumed / goal, clamped 0..1 — used to fill each macro ring.
+  const macroProgress = (consumed: number, goal?: number) =>
+    goal != null && goal > 0 ? Math.min(consumed / goal, 1) : 0;
+
   const proteinLeft = summary?.goal_protein_g != null
     ? Math.max(0, summary.goal_protein_g - summary.total_protein_g)
     : null;
@@ -94,18 +112,24 @@ export default function HomeScreen({ onNavigate }: Props) {
     : null;
 
   const MACROS = [
-    { label: 'Protein left', value: proteinLeft != null ? `${Math.round(proteinLeft)}g` : '—', color: '#E87070', emoji: '🥩' },
-    { label: 'Carbs left', value: carbsLeft != null ? `${Math.round(carbsLeft)}g` : '—', color: '#E8955A', emoji: '🌾' },
-    { label: 'Fat left', value: fatLeft != null ? `${Math.round(fatLeft)}g` : '—', color: '#70A8E8', emoji: '💧' },
+    { label: 'Protein left', value: proteinLeft != null ? `${Math.round(proteinLeft)}g` : '—', color: '#E87070', emoji: '🥩',
+      progress: macroProgress(summary?.total_protein_g ?? 0, summary?.goal_protein_g) },
+    { label: 'Carbs left', value: carbsLeft != null ? `${Math.round(carbsLeft)}g` : '—', color: '#E8955A', emoji: '🌾',
+      progress: macroProgress(summary?.total_carbs_g ?? 0, summary?.goal_carbs_g) },
+    { label: 'Fat left', value: fatLeft != null ? `${Math.round(fatLeft)}g` : '—', color: '#70A8E8', emoji: '💧',
+      progress: macroProgress(summary?.total_fat_g ?? 0, summary?.goal_fat_g) },
   ];
 
+  // Most-recent-first across all meals, by logged_at timestamp.
   const recentLogs = summary
     ? [
         ...(summary.entries_by_meal.breakfast ?? []),
         ...(summary.entries_by_meal.lunch ?? []),
         ...(summary.entries_by_meal.dinner ?? []),
         ...(summary.entries_by_meal.snack ?? []),
-      ].slice(-5)
+      ]
+        .sort((a, b) => (b.logged_at ?? '').localeCompare(a.logged_at ?? ''))
+        .slice(0, 5)
     : [];
 
   if (loadError) {
@@ -176,7 +200,9 @@ export default function HomeScreen({ onNavigate }: Props) {
                   <Svg width={52} height={52}>
                     <Circle cx={26} cy={26} r={20} stroke="#eee" strokeWidth={4} fill="none" />
                     <Circle cx={26} cy={26} r={20} stroke={m.color} strokeWidth={4} fill="none"
-                      strokeDasharray={125} strokeDashoffset={40} strokeLinecap="round"
+                      strokeDasharray={MACRO_RING_CIRC}
+                      strokeDashoffset={MACRO_RING_CIRC * (1 - m.progress)}
+                      strokeLinecap="round"
                       rotation="-90" origin="26,26" />
                   </Svg>
                   <Text style={styles.macroEmoji}>{m.emoji}</Text>
@@ -185,7 +211,7 @@ export default function HomeScreen({ onNavigate }: Props) {
             ))}
           </View>
 
-          <Text style={styles.sectionTitle}>Recently logged</Text>
+          <Text style={styles.sectionTitle}>Recently uploaded</Text>
           {recentLogs.length === 0 ? (
             <View style={styles.emptyCard}>
               <Text style={styles.emptyTitle}>You haven't uploaded any food</Text>
@@ -203,26 +229,20 @@ export default function HomeScreen({ onNavigate }: Props) {
               </View>
             ))
           )}
-          <View style={{ height: 20 }} />
+          {/* Spacer so content clears the floating tab bar. */}
+          <View style={{ height: 110 }} />
         </ScrollView>
 
-        <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-          <TouchableOpacity style={styles.tabItem}>
-            <Text style={styles.tabIcon}>⊞</Text>
-            <Text style={[styles.tabLabel, styles.tabLabelActive]}>Home</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate?.('progress')}>
-            <Text style={styles.tabIcon}>📊</Text>
-            <Text style={styles.tabLabel}>Progress</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate?.('settings')}>
-            <Text style={styles.tabIcon}>⚙️</Text>
-            <Text style={styles.tabLabel}>Settings</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
-            <Text style={styles.fabText}>+</Text>
-          </TouchableOpacity>
-        </View>
+        <FloatingTabBar
+          active="home"
+          initials={initials}
+          onSelect={(tab) => {
+            if (tab === 'progress') onNavigate?.('progress');
+            else if (tab === 'profile') onNavigate?.('settings');
+            else if (tab === 'groups') Alert.alert('Coming soon', 'Groups will be available in a future update.');
+          }}
+          onAdd={() => setModalVisible(true)}
+        />
       </View>
 
       <FoodLogModal

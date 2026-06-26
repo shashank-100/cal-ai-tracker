@@ -29,8 +29,8 @@ export default function ScrollPicker({ items, selected, onSelect, itemHeight, vi
         showsVerticalScrollIndicator={false}
         snapToInterval={itemHeight}
         decelerationRate="fast"
-        initialScrollIndex={initialIndex}
-        getItemLayout={(_, index) => ({ length: itemHeight, offset: itemHeight * 2 + itemHeight * index, index })}
+        initialScrollIndex={initialIndex >= 0 ? initialIndex : 0}
+        getItemLayout={(_, index) => ({ length: itemHeight, offset: itemHeight * index, index })}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         contentContainerStyle={{ paddingVertical: itemHeight * 2 }}

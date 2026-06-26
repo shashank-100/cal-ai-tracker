@@ -8,24 +8,44 @@ const BASE = process.env.EXPO_PUBLIC_API_URL!;
 class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
+    // Preserve `instanceof ApiError` after Babel/Hermes transpilation, which
+    // otherwise breaks the prototype chain when extending built-ins.
+    Object.setPrototypeOf(this, ApiError.prototype);
+    this.name = 'ApiError';
   }
 }
+
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 async function request<T>(
   path: string,
   token: string,
   init: RequestInit = {}
 ): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(init.body && !(init.body instanceof FormData)
-        ? { 'Content-Type': 'application/json' }
-        : {}),
-      ...init.headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(init.body && !(init.body instanceof FormData)
+          ? { 'Content-Type': 'application/json' }
+          : {}),
+        ...init.headers,
+      },
+    });
+  } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      throw new ApiError(0, 'Request timed out. Please check your connection and try again.');
+    }
+    throw new ApiError(0, 'Network error. Please check your connection and try again.');
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!res.ok) {
     let detail = res.statusText;
@@ -64,10 +84,10 @@ export const api = {
 
   foodLogs: {
     dailySummary: (token: string, logDate: string) =>
-      request<DailySummary>(`/food-logs/daily-summary?log_date=${logDate}`, token),
+      request<DailySummary>(`/food-logs/daily-summary?log_date=${encodeURIComponent(logDate)}`, token),
 
     list: (token: string, logDate: string) =>
-      request<FoodLog[]>(`/food-logs?log_date=${logDate}`, token),
+      request<FoodLog[]>(`/food-logs?log_date=${encodeURIComponent(logDate)}`, token),
 
     create: (token: string, body: FoodLogCreate) =>
       request<FoodLog>('/food-logs', token, {
@@ -76,7 +96,7 @@ export const api = {
       }),
 
     delete: (token: string, logId: string) =>
-      request<{ deleted: boolean }>(`/food-logs/${logId}`, token, {
+      request<{ deleted: boolean }>(`/food-logs/${encodeURIComponent(logId)}`, token, {
         method: 'DELETE',
       }),
   },
@@ -117,7 +137,7 @@ export const api = {
 
   progress: {
     weekly: (token: string, weekStart?: string) =>
-      request<any>(`/progress/weekly${weekStart ? `?week_start=${weekStart}` : ''}`, token),
+      request<any>(`/progress/weekly${weekStart ? `?week_start=${encodeURIComponent(weekStart)}` : ''}`, token),
 
     monthly: (token: string, year?: number, month?: number) => {
       const params = year && month ? `?year=${year}&month=${month}` : '';

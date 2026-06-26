@@ -5,16 +5,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
-import {
-  GoogleSignin,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
-import { supabase } from '../lib/supabase';
-
-GoogleSignin.configure({
-  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
-  scopes: ['profile', 'email'],
-});
+import { signInWithGoogle } from '../lib/googleAuth';
 
 interface Props {
   onApple: () => void;
@@ -49,21 +40,11 @@ export default function CreateAccountScreen({ onApple, onGoogle, onSkip, onBack 
   const handleGoogle = async () => {
     setLoading('google');
     try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      const idToken = userInfo.data?.idToken;
-      if (!idToken) throw new Error('No ID token returned');
-
-      const { error } = await supabase.auth.signInWithIdToken({
-        provider: 'google',
-        token: idToken,
-      });
-      if (error) throw error;
-      // onAuthStateChange in authStore fires → App.tsx navigates to home
-    } catch (err: any) {
-      if (err.code === statusCodes.SIGN_IN_CANCELLED) return;
-      if (err.code === statusCodes.IN_PROGRESS) return;
-      Alert.alert('Error', err?.message ?? 'Google sign-in failed. Please try again.');
+      const result = await signInWithGoogle();
+      // On success, onAuthStateChange in authStore fires → App.tsx navigates home.
+      if (!result.ok && !result.cancelled) {
+        Alert.alert('Sign-in failed', result.message);
+      }
     } finally {
       setLoading(null);
     }

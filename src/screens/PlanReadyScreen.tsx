@@ -36,11 +36,14 @@ export default function PlanReadyScreen({ onGetStarted, onBack, goal = 'Gain wei
   const targetDate = calcTargetDate(targetDiff, goal);
   const goalVerb = goal === 'Gain weight' ? 'gain' : goal === 'Lose weight' ? 'lose' : 'maintain';
 
+  // Ring fill = share of total calories from each macro (carbs/protein 4 kcal/g,
+  // fat 9 kcal/g). The calories ring is always full. Honest, not decorative.
+  const cals = Math.max(macros.calories, 1);
   const MACROS = [
-    { label: 'Calories', value: String(macros.calories), unit: '', color: '#000', emoji: '🔥' },
-    { label: 'Carbs', value: String(macros.carbs), unit: 'g', color: '#E8955A', emoji: '🌾' },
-    { label: 'Protein', value: String(macros.protein), unit: 'g', color: '#E87070', emoji: '🥩' },
-    { label: 'Fats', value: String(macros.fats), unit: 'g', color: '#70A8E8', emoji: '💧' },
+    { label: 'Calories', value: String(macros.calories), unit: '', color: '#000', emoji: '🔥', fill: 1 },
+    { label: 'Carbs', value: String(macros.carbs), unit: 'g', color: '#E8955A', emoji: '🌾', fill: (macros.carbs * 4) / cals },
+    { label: 'Protein', value: String(macros.protein), unit: 'g', color: '#E87070', emoji: '🥩', fill: (macros.protein * 4) / cals },
+    { label: 'Fats', value: String(macros.fats), unit: 'g', color: '#70A8E8', emoji: '💧', fill: (macros.fats * 9) / cals },
   ];
   return (
     <SafeAreaView style={styles.safe}>
@@ -75,7 +78,7 @@ export default function PlanReadyScreen({ onGetStarted, onBack, goal = 'Gain wei
                 <View key={m.label} style={styles.macroCard}>
                   <Text style={styles.macroEmoji}>{m.emoji}</Text>
                   <Text style={styles.macroLabel}>{m.label}</Text>
-                  <MacroRing color={m.color} />
+                  <MacroRing color={m.color} fill={m.fill} />
                   <Text style={styles.macroValue}>
                     {m.value}<Text style={styles.macroUnit}>{m.unit}</Text>
                   </Text>
@@ -93,9 +96,10 @@ export default function PlanReadyScreen({ onGetStarted, onBack, goal = 'Gain wei
   );
 }
 
-function MacroRing({ color }: { color: string }) {
+function MacroRing({ color, fill }: { color: string; fill: number }) {
   const r = 28;
   const circ = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(fill, 1));
   return (
     <Svg width={70} height={70} viewBox="0 0 70 70">
       <Circle cx={35} cy={35} r={r} stroke="#eee" strokeWidth={5} fill="none" />
@@ -103,7 +107,7 @@ function MacroRing({ color }: { color: string }) {
         cx={35} cy={35} r={r}
         stroke={color} strokeWidth={5} fill="none"
         strokeDasharray={circ}
-        strokeDashoffset={circ * 0.25}
+        strokeDashoffset={circ * (1 - clamped)}
         strokeLinecap="round"
         rotation="-90"
         origin="35,35"
