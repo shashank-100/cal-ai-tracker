@@ -31,7 +31,8 @@ export default function SettingsScreen({ onBack, onNavigate }: Props) {
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    if (!token) return;
+    // No token (e.g. "Skip for now"): don't get stuck on the spinner.
+    if (!token) { setLoading(false); return; }
     setLoading(true);
     try {
       const [p, pl] = await Promise.all([
@@ -40,7 +41,8 @@ export default function SettingsScreen({ onBack, onNavigate }: Props) {
       ]);
       setProfile(p);
       setPlan(pl);
-    } catch {
+    } catch (err) {
+      console.warn('SettingsScreen load failed:', err);
       Alert.alert('Error', 'Could not load profile.');
     } finally {
       setLoading(false);

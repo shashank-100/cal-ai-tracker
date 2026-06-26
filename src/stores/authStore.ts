@@ -29,6 +29,17 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
     );
 
+    // Fallback in case the initial onAuthStateChange event is delayed/missed,
+    // so `loading` always resolves and the app never hangs on the splash.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      set((s) => s.loading ? {
+        session,
+        user: session?.user ?? null,
+        token: session?.access_token ?? null,
+        loading: false,
+      } : s);
+    });
+
     return () => subscription.unsubscribe();
   },
 

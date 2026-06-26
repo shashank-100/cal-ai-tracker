@@ -86,6 +86,20 @@ export default function LoadingScreen({ onboardingData, onComplete }: Props) {
     });
   }, [percent]);
 
+  // Safety net: if the token never arrives (so plan generation can't run),
+  // don't sit at 92% forever — proceed after a timeout.
+  useEffect(() => {
+    if (called.current) return;
+    const t = setTimeout(() => {
+      if (!called.current) {
+        called.current = true;
+        setPercent(100);
+        onCompleteRef.current();
+      }
+    }, 12000);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(() => {
     if (percent < 30 || called.current || !token) return;
     called.current = true;

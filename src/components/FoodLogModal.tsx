@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Modal, View, Text, StyleSheet, TouchableOpacity,
   ActivityIndicator, Alert, ScrollView, SafeAreaView,
@@ -27,6 +27,10 @@ export default function FoodLogModal({ visible, onClose, onLogged }: Props) {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [mealType, setMealType] = useState<MealType>('lunch');
   const [servingQty, setServingQty] = useState(1);
+
+  // Track open state so in-flight async work doesn't setState/Alert after close.
+  const openRef = useRef(visible);
+  useEffect(() => { openRef.current = visible; }, [visible]);
 
   const reset = () => {
     setStep('pick');
@@ -65,9 +69,11 @@ export default function FoodLogModal({ visible, onClose, onLogged }: Props) {
 
     try {
       const analysis = await api.foodAnalysis.analyze(token, uri, mealType);
+      if (!openRef.current) return; // modal closed mid-analysis
       setResult(analysis);
       setStep('confirm');
     } catch (err) {
+      if (!openRef.current) return;
       const msg = err instanceof ApiError ? err.message : 'Analysis failed. Please try again.';
       Alert.alert('Error', msg, [{ text: 'OK', onPress: reset }]);
     }

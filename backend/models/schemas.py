@@ -1,6 +1,12 @@
 from datetime import date
 from typing import Literal, Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+
+def _reject_future_date(v: date) -> date:
+    if v > date.today():
+        raise ValueError("log_date cannot be in the future")
+    return v
 
 
 # ── Profile ──────────────────────────────────────────────────────────────────
@@ -33,10 +39,10 @@ class ProfileUpdate(BaseModel):
 class PlanGenerateRequest(BaseModel):
     gender: str
     birthday: date
-    height_cm: float
-    weight_kg: float
+    height_cm: float = Field(gt=0, le=300)
+    weight_kg: float = Field(gt=0, le=700)
     goal: Literal["lose", "maintain", "gain"]
-    desired_weight_kg: float
+    desired_weight_kg: float = Field(gt=0, le=700)
     weight_speed_kg_week: float = Field(default=0.5, ge=0.1, le=1.5)
     workouts_per_week: int = Field(default=3, ge=0, le=7)
     diet_preference: str = "standard"
@@ -49,6 +55,15 @@ class PlanGenerateRequest(BaseModel):
         if age < 10 or age > 120:
             raise ValueError("Birthday must correspond to an age between 10 and 120")
         return v
+
+    @model_validator(mode="after")
+    def validate_goal_direction(self):
+        # Desired weight must be consistent with the stated goal.
+        if self.goal == "lose" and self.desired_weight_kg >= self.weight_kg:
+            raise ValueError("desired_weight_kg must be below current weight for goal 'lose'")
+        if self.goal == "gain" and self.desired_weight_kg <= self.weight_kg:
+            raise ValueError("desired_weight_kg must be above current weight for goal 'gain'")
+        return self
 
 
 # ── Food Logs ─────────────────────────────────────────────────────────────────
@@ -71,6 +86,11 @@ class FoodLogCreate(BaseModel):
     ai_raw_response: Optional[dict] = None
     notes: Optional[str] = Field(default=None, max_length=1000)
 
+    @field_validator("log_date")
+    @classmethod
+    def _no_future(cls, v: date) -> date:
+        return _reject_future_date(v)
+
 
 class FoodLogUpdate(BaseModel):
     food_name: Optional[str] = Field(default=None, max_length=200)
@@ -91,12 +111,22 @@ class WeightEntryCreate(BaseModel):
     log_date: date
     notes: Optional[str] = Field(default=None, max_length=1000)
 
+    @field_validator("log_date")
+    @classmethod
+    def _no_future(cls, v: date) -> date:
+        return _reject_future_date(v)
+
 
 # ── Water Logs ────────────────────────────────────────────────────────────────
 
 class WaterLogCreate(BaseModel):
     log_date: date
     amount_ml: int = Field(ge=1, le=5000)
+
+    @field_validator("log_date")
+    @classmethod
+    def _no_future(cls, v: date) -> date:
+        return _reject_future_date(v)
 
 
 # ── Exercise Logs ─────────────────────────────────────────────────────────────
@@ -107,3 +137,8 @@ class ExerciseLogCreate(BaseModel):
     duration_min: Optional[int] = Field(default=None, ge=0, le=1440)
     calories_burned: int = Field(ge=0, le=10000)
     source: Literal["manual", "apple_health", "google_fit"] = "manual"
+
+    @field_validator("log_date")
+    @classmethod
+    def _no_future(cls, v: date) -> date:
+        return _reject_future_date(v)

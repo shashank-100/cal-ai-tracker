@@ -62,9 +62,16 @@ def generate_plan(
     carbs_g   = round((calories_target * carbs_ratio)   / 4)
     fat_g     = round((calories_target * fat_ratio)     / 9)
 
-    # Estimated weeks to goal
+    # Estimated weeks to goal — derive from the EFFECTIVE deficit/surplus after
+    # the 1200 floor, not the requested speed, so the timeline isn't a lie when
+    # the target was clamped.
     weight_diff_kg = abs(desired_weight_kg - weight_kg)
-    weeks_to_goal = round(weight_diff_kg / weight_speed_kg_week) if weight_speed_kg_week > 0 else 0
+    effective_daily = abs(tdee - calories_target)
+    if goal == "maintain" or effective_daily == 0 or weight_diff_kg == 0:
+        weeks_to_goal = 0
+    else:
+        effective_kg_week = (effective_daily * 7) / 7700
+        weeks_to_goal = round(weight_diff_kg / effective_kg_week) if effective_kg_week > 0 else 0
 
     return {
         "calories_target": calories_target,

@@ -80,11 +80,20 @@ export default function App() {
     return unsub;
   }, []);
 
+  const postAuthScreens: Screen[] = ['home', 'progress', 'settings'];
+
   useEffect(() => {
     if (!authLoading && session) {
-      const postAuthScreens: Screen[] = ['home', 'progress', 'settings'];
       const onboardingComplete = postAuthScreens.includes(screen) || FLOW.indexOf(screen) > FLOW.indexOf('createAccount');
       if (!onboardingComplete) setScreen('home');
+    }
+  }, [authLoading, session, screen]);
+
+  // When the session ends (sign out / expiry) while on a signed-in screen,
+  // return to welcome so the user isn't stranded on a tokenless data screen.
+  useEffect(() => {
+    if (!authLoading && !session && postAuthScreens.includes(screen)) {
+      setScreen('welcome');
     }
   }, [authLoading, session, screen]);
 

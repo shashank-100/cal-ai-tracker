@@ -62,10 +62,40 @@ async def analyze_food_image(image_bytes: bytes, media_type: str = "image/jpeg")
         output_tokens=response.usage.output_tokens,
     )
 
-    raw = response.content[0].text if response.content[0].type == "text" else ""
-    raw = raw.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    # Find the first text block; the content list can be empty (e.g. refusal /
+    # max_tokens with no text) which would otherwise IndexError.
+    raw = next((b.text for b in response.content if getattr(b, "type", None) == "text"), "")
+    if not raw.strip():
+        raise ValueError("Claude returned no text content")
+
+    # Strip code fences case-insensitively.
+    cleaned = raw.strip()
+    low = cleaned.lower()
+    if low.startswith("```json"):
+        cleaned = cleaned[len("```json"):]
+    elif cleaned.startswith("```"):
+        cleaned = cleaned[3:]
+    cleaned = cleaned.removesuffix("```").strip()
+
     try:
-        return json.loads(raw)
+        data = json.loads(cleaned)
     except json.JSONDecodeError:
-        logger.debug("Claude non-JSON response: %s", raw[:200])
+        logger.debug("Claude non-JSON response: %s", cleaned[:200])
         raise ValueError("Claude returned non-JSON response")
+
+    # Validate required numeric fields so malformed AI output can't poison the
+    # food log. Coerce to numbers; raise ValueError (→ 422) on missing/bad data.
+    required_numeric = ("calories", "protein_g", "carbs_g", "fat_g")
+    for key in required_numeric:
+        if key not in data:
+            raise ValueError(f"Claude response missing required field: {key}")
+        try:
+            data[key] = float(data[key])
+        except (TypeError, ValueError):
+            raise ValueError(f"Claude response field {key} is not a number")
+        if data[key] < 0:
+            raise ValueError(f"Claude response field {key} is negative")
+    # Optional fields default to sane values.
+    data.setdefault("fiber_g", 0)
+    data.setdefault("name", "Unknown food")
+    return data

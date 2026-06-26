@@ -59,7 +59,8 @@ async def validate_referral_code(body: ValidateRequest, user: dict = Depends(get
         )
         if not res.data:
             raise HTTPException(status_code=404, detail="Invalid referral code")
-        return {"valid": True, "status": res.data[0]["status"]}
+        # Don't leak the referral's internal status to arbitrary callers.
+        return {"valid": True}
     except HTTPException:
         raise
     except Exception as e:

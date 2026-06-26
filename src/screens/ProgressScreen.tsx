@@ -66,7 +66,8 @@ export default function ProgressScreen({ onBack, onNavigate }: Props) {
   const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
-    if (!token) return;
+    // No token (e.g. "Skip for now"): don't get stuck on the spinner.
+    if (!token) { setLoading(false); return; }
     setLoading(true);
     setError(false);
     try {
@@ -76,7 +77,8 @@ export default function ProgressScreen({ onBack, onNavigate }: Props) {
       ]);
       setWeekly(w);
       setMonthly(m);
-    } catch {
+    } catch (err) {
+      console.warn('ProgressScreen load failed:', err);
       setError(true);
     } finally {
       setLoading(false);

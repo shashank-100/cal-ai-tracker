@@ -57,7 +57,9 @@ async def weekly_progress(
         d = (week_start + timedelta(days=i)).isoformat()
         entry = days.get(d, {"date": d, "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0})
         entry["goal_calories"] = goal
-        entry["on_target"] = entry["calories"] > 0 and entry["calories"] <= goal * 1.05
+        # On target = within a band around goal, not merely "logged something
+        # under goal" (a single 20-kcal day shouldn't count).
+        entry["on_target"] = goal * 0.8 <= entry["calories"] <= goal * 1.05
         daily.append(entry)
 
     logged_days = sum(1 for d in daily if d["calories"] > 0)
@@ -120,7 +122,7 @@ async def monthly_progress(
         days[d]["calories"] += log.get("calories") or 0
 
     logged_days = len(days)
-    on_target = sum(1 for v in days.values() if v["calories"] <= goal * 1.05)
+    on_target = sum(1 for v in days.values() if goal * 0.8 <= v["calories"] <= goal * 1.05)
     avg_cal = round(sum(v["calories"] for v in days.values()) / max(logged_days, 1), 1)
 
     return {
